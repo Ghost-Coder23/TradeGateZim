@@ -1,0 +1,835 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TradeGate ZW — Zimbabwe's Forex Payment Bridge</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --teal:    #00e5b4;
+      --teal2:   #00c49a;
+      --gold:    #f0c040;
+      --bg:      #080c10;
+      --bg2:     #0e1420;
+      --card:    #111926;
+      --border:  #1e2a3a;
+      --text:    #e8f0f8;
+      --muted:   #5a7090;
+      --danger:  #ff4f6d;
+      --mono:    'JetBrains Mono', monospace;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      overflow-x: hidden;
+    }
+
+    /* ── NOISE OVERLAY ── */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+      pointer-events: none;
+      z-index: 0;
+      opacity: 0.5;
+    }
+
+    /* ── NAV ── */
+    nav {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1.2rem 5%;
+      background: rgba(8,12,16,0.85);
+      backdrop-filter: blur(16px);
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+      transition: background 0.3s;
+    }
+
+    .logo {
+      font-family: 'Syne', sans-serif;
+      font-size: 1.45rem;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      color: var(--teal);
+      text-decoration: none;
+    }
+    .logo span { color: var(--text); }
+
+    .nav-links { display: flex; align-items: center; gap: 2.5rem; }
+    .nav-links a {
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 0.9rem;
+      font-weight: 500;
+      transition: color 0.2s;
+    }
+    .nav-links a:hover { color: var(--text); }
+
+    .nav-cta {
+      display: flex; gap: 0.75rem; align-items: center;
+    }
+    .btn-ghost {
+      padding: 0.55rem 1.3rem;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      text-decoration: none;
+      font-size: 0.88rem;
+      font-weight: 500;
+      transition: border-color 0.2s, color 0.2s;
+    }
+    .btn-ghost:hover { border-color: var(--teal); color: var(--teal); }
+
+    .btn-solid {
+      padding: 0.55rem 1.4rem;
+      background: var(--teal);
+      border-radius: 8px;
+      color: #060a0e;
+      text-decoration: none;
+      font-size: 0.88rem;
+      font-weight: 700;
+      transition: background 0.2s, transform 0.15s;
+    }
+    .btn-solid:hover { background: var(--teal2); transform: translateY(-1px); }
+
+    /* ── HERO ── */
+    .hero {
+      position: relative;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      padding: 7rem 5% 5rem;
+      overflow: hidden;
+    }
+
+    /* grid lines background */
+    .hero::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(0,229,180,0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0,229,180,0.04) 1px, transparent 1px);
+      background-size: 60px 60px;
+      pointer-events: none;
+    }
+
+    /* glow orbs */
+    .orb {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(80px);
+      pointer-events: none;
+    }
+    .orb-1 { width: 500px; height: 500px; background: rgba(0,229,180,0.12); top: -100px; right: -100px; }
+    .orb-2 { width: 350px; height: 350px; background: rgba(240,192,64,0.07); bottom: 50px; left: 100px; }
+
+    .hero-inner {
+      position: relative;
+      z-index: 2;
+      max-width: 1200px;
+      width: 100%;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 4rem;
+      align-items: center;
+    }
+
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 14px;
+      background: rgba(0,229,180,0.08);
+      border: 1px solid rgba(0,229,180,0.2);
+      border-radius: 100px;
+      font-size: 0.78rem;
+      font-family: var(--mono);
+      color: var(--teal);
+      margin-bottom: 1.5rem;
+      animation: fadeUp 0.6s ease both;
+    }
+    .badge-dot { width: 7px; height: 7px; background: var(--teal); border-radius: 50%; animation: pulse 2s infinite; }
+
+    .hero h1 {
+      font-family: 'Syne', sans-serif;
+      font-size: clamp(2.4rem, 4.5vw, 3.8rem);
+      font-weight: 800;
+      line-height: 1.08;
+      letter-spacing: -0.03em;
+      margin-bottom: 1.5rem;
+      animation: fadeUp 0.6s 0.1s ease both;
+    }
+    .hero h1 .accent { color: var(--teal); }
+    .hero h1 .line2 { display: block; }
+
+    .hero p {
+      font-size: 1.05rem;
+      color: var(--muted);
+      line-height: 1.7;
+      max-width: 480px;
+      margin-bottom: 2.5rem;
+      font-weight: 300;
+      animation: fadeUp 0.6s 0.2s ease both;
+    }
+
+    .hero-actions {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+      animation: fadeUp 0.6s 0.3s ease both;
+    }
+
+    .btn-hero {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 0.9rem 2rem;
+      background: var(--teal);
+      color: #060a0e;
+      border-radius: 10px;
+      text-decoration: none;
+      font-weight: 700;
+      font-size: 0.95rem;
+      transition: background 0.2s, transform 0.15s, box-shadow 0.2s;
+      box-shadow: 0 0 30px rgba(0,229,180,0.25);
+    }
+    .btn-hero:hover { background: var(--teal2); transform: translateY(-2px); box-shadow: 0 8px 40px rgba(0,229,180,0.35); }
+
+    .btn-hero-outline {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 0.9rem 2rem;
+      border: 1px solid var(--border);
+      color: var(--text);
+      border-radius: 10px;
+      text-decoration: none;
+      font-weight: 500;
+      font-size: 0.95rem;
+      transition: border-color 0.2s, color 0.2s;
+    }
+    .btn-hero-outline:hover { border-color: var(--teal); color: var(--teal); }
+
+    /* ── HERO CARD (right side) ── */
+    .hero-visual {
+      animation: fadeUp 0.7s 0.2s ease both;
+    }
+
+    .tx-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 1.8rem;
+      position: relative;
+      overflow: hidden;
+    }
+    .tx-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--teal), transparent);
+      opacity: 0.5;
+    }
+
+    .tx-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1.5rem;
+    }
+    .tx-title {
+      font-family: 'Syne', sans-serif;
+      font-weight: 700;
+      font-size: 0.95rem;
+    }
+    .tx-live {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.75rem;
+      font-family: var(--mono);
+      color: var(--teal);
+    }
+    .live-dot { width: 6px; height: 6px; background: var(--teal); border-radius: 50%; animation: pulse 1.5s infinite; }
+
+    .tx-flow {
+      display: flex;
+      flex-direction: column;
+      gap: 0.9rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .tx-step {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      padding: 0.9rem 1rem;
+      background: rgba(255,255,255,0.03);
+      border-radius: 10px;
+      border: 1px solid rgba(255,255,255,0.05);
+    }
+    .tx-icon {
+      width: 36px; height: 36px;
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1rem;
+      flex-shrink: 0;
+    }
+    .tx-icon.eco { background: rgba(0,229,180,0.12); }
+    .tx-icon.arrow { background: rgba(255,255,255,0.05); font-size: 0.8rem; }
+    .tx-icon.bin { background: rgba(240,192,64,0.12); }
+
+    .tx-label { font-size: 0.82rem; color: var(--muted); }
+    .tx-value { font-family: var(--mono); font-size: 0.95rem; font-weight: 500; }
+
+    .tx-amount-box {
+      background: rgba(0,229,180,0.06);
+      border: 1px solid rgba(0,229,180,0.15);
+      border-radius: 12px;
+      padding: 1rem 1.2rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .amount-label { font-size: 0.78rem; color: var(--muted); margin-bottom: 4px; }
+    .amount-value { font-family: var(--mono); font-size: 1.3rem; color: var(--teal); font-weight: 500; }
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 14px;
+      background: rgba(0,229,180,0.1);
+      border: 1px solid rgba(0,229,180,0.25);
+      border-radius: 100px;
+      font-size: 0.75rem;
+      font-family: var(--mono);
+      color: var(--teal);
+    }
+
+    /* ── STATS STRIP ── */
+    .stats-strip {
+      padding: 3rem 5%;
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      background: var(--bg2);
+    }
+    .stats-inner {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 2rem;
+      text-align: center;
+    }
+    .stat-num {
+      font-family: 'Syne', sans-serif;
+      font-size: 2.2rem;
+      font-weight: 800;
+      color: var(--teal);
+    }
+    .stat-desc { font-size: 0.85rem; color: var(--muted); margin-top: 4px; }
+
+    /* ── HOW IT WORKS ── */
+    section { padding: 6rem 5%; }
+
+    .section-inner { max-width: 1200px; margin: 0 auto; }
+
+    .section-tag {
+      font-family: var(--mono);
+      font-size: 0.75rem;
+      color: var(--teal);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      margin-bottom: 1rem;
+    }
+
+    .section-title {
+      font-family: 'Syne', sans-serif;
+      font-size: clamp(1.8rem, 3vw, 2.6rem);
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      margin-bottom: 1rem;
+    }
+
+    .section-sub {
+      color: var(--muted);
+      font-size: 1rem;
+      line-height: 1.7;
+      max-width: 520px;
+      font-weight: 300;
+      margin-bottom: 3.5rem;
+    }
+
+    .steps-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1.5rem;
+      position: relative;
+    }
+
+    .step-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 1.8rem;
+      position: relative;
+      transition: border-color 0.3s, transform 0.3s;
+    }
+    .step-card:hover { border-color: rgba(0,229,180,0.3); transform: translateY(-4px); }
+
+    .step-num-big {
+      font-family: 'Syne', sans-serif;
+      font-size: 3rem;
+      font-weight: 800;
+      color: rgba(0,229,180,0.1);
+      line-height: 1;
+      margin-bottom: 1rem;
+    }
+    .step-emoji { font-size: 1.8rem; margin-bottom: 1rem; display: block; }
+    .step-title { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 1rem; margin-bottom: 0.5rem; }
+    .step-desc { font-size: 0.85rem; color: var(--muted); line-height: 1.6; }
+
+    /* ── FEATURES ── */
+    .features-section { background: var(--bg2); }
+
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1.5rem;
+    }
+
+    .feature-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 2rem;
+      transition: border-color 0.3s, transform 0.3s;
+    }
+    .feature-card:hover { border-color: rgba(0,229,180,0.25); transform: translateY(-3px); }
+
+    .feature-icon {
+      width: 48px; height: 48px;
+      border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.4rem;
+      margin-bottom: 1.2rem;
+    }
+    .fi-teal { background: rgba(0,229,180,0.1); }
+    .fi-gold { background: rgba(240,192,64,0.1); }
+    .fi-blue { background: rgba(100,149,255,0.1); }
+
+    .feature-title {
+      font-family: 'Syne', sans-serif;
+      font-weight: 700;
+      font-size: 1rem;
+      margin-bottom: 0.6rem;
+    }
+    .feature-desc { font-size: 0.87rem; color: var(--muted); line-height: 1.65; }
+
+    /* ── PLATFORMS ── */
+    .platforms-row {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 1rem;
+      margin-top: 3rem;
+    }
+    .platform-pill {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 0.7rem 1.4rem;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 100px;
+      font-size: 0.88rem;
+      font-weight: 500;
+      transition: border-color 0.2s, color 0.2s;
+    }
+    .platform-pill:hover { border-color: var(--teal); color: var(--teal); }
+    .platform-pill span { font-size: 1.1rem; }
+
+    /* ── CTA ── */
+    .cta-section {
+      background: linear-gradient(135deg, rgba(0,229,180,0.06), rgba(240,192,64,0.04));
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      text-align: center;
+    }
+    .cta-section .section-title { margin: 0 auto 1rem; }
+    .cta-section .section-sub { margin: 0 auto 2.5rem; text-align: center; }
+
+    .cta-actions { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
+
+    /* ── FOOTER ── */
+    footer {
+      padding: 3rem 5%;
+      border-top: 1px solid var(--border);
+      text-align: center;
+    }
+    footer .logo { font-size: 1.2rem; display: inline-block; margin-bottom: 1rem; }
+    footer p { font-size: 0.82rem; color: var(--muted); }
+    .sim-note {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 1rem;
+      padding: 6px 14px;
+      background: rgba(240,192,64,0.08);
+      border: 1px solid rgba(240,192,64,0.2);
+      border-radius: 100px;
+      font-size: 0.75rem;
+      font-family: var(--mono);
+      color: var(--gold);
+    }
+
+    /* ── ANIMATIONS ── */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(24px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50%       { opacity: 0.5; transform: scale(0.85); }
+    }
+    @keyframes floatCard {
+      0%, 100% { transform: translateY(0px); }
+      50%       { transform: translateY(-8px); }
+    }
+    .hero-visual { animation: floatCard 5s ease-in-out infinite, fadeUp 0.7s 0.2s ease both; }
+
+    /* ── TICKER ── */
+    .ticker-wrap {
+      background: var(--bg2);
+      border-bottom: 1px solid var(--border);
+      padding: 10px 0;
+      overflow: hidden;
+      white-space: nowrap;
+    }
+    .ticker-inner {
+      display: inline-flex;
+      gap: 3rem;
+      animation: ticker 20s linear infinite;
+      font-family: var(--mono);
+      font-size: 0.78rem;
+      color: var(--muted);
+    }
+    .ticker-item { display: flex; align-items: center; gap: 8px; }
+    .ticker-up { color: var(--teal); }
+    @keyframes ticker { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 900px) {
+      .hero-inner { grid-template-columns: 1fr; }
+      .hero-visual { display: none; }
+      .steps-grid { grid-template-columns: 1fr 1fr; }
+      .features-grid { grid-template-columns: 1fr; }
+      .stats-inner { grid-template-columns: 1fr 1fr; }
+      .nav-links { display: none; }
+    }
+    @media (max-width: 600px) {
+      .steps-grid { grid-template-columns: 1fr; }
+      .stats-inner { grid-template-columns: 1fr 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <a href="{% url 'home' %}" class="logo">Trade<span>Gate</span></a>
+  <div class="nav-links">
+    <a href="#how">How it works</a>
+    <a href="#features">Features</a>
+    <a href="#platforms">Platforms</a>
+    <a href="{% url 'rates' %}">Rates</a>
+  </div>
+  <div class="nav-cta">
+    <a href="{% url 'login' %}" class="btn-ghost">Sign In</a>
+    <a href="{% url 'register' %}" class="btn-solid">Get Started</a>
+  </div>
+</nav>
+
+<!-- TICKER -->
+<div class="ticker-wrap" style="margin-top:64px">
+  <div class="ticker-inner">
+    <div class="ticker-item">USDT/USD <span class="ticker-up">1.0002 ↑</span></div>
+    <div class="ticker-item">EcoCash → Binance <span class="ticker-up">Active</span></div>
+    <div class="ticker-item">Deposit Fee <span class="ticker-up">{{ deposit_fee_percent }}%</span></div>
+    <div class="ticker-item">Processing Time <span class="ticker-up">~15 min</span></div>
+    <div class="ticker-item">USDT/USD <span class="ticker-up">1.0002 ↑</span></div>
+    <div class="ticker-item">EcoCash → Weltrade <span class="ticker-up">Active</span></div>
+    <div class="ticker-item">Min Deposit <span class="ticker-up">$10</span></div>
+    <div class="ticker-item">Max Deposit <span class="ticker-up">$5,000</span></div>
+    <!-- duplicate for seamless loop -->
+    <div class="ticker-item">USDT/USD <span class="ticker-up">1.0002 ↑</span></div>
+    <div class="ticker-item">EcoCash → Binance <span class="ticker-up">Active</span></div>
+    <div class="ticker-item">Withdrawal Fee <span class="ticker-up">{{ withdrawal_fee_percent }}%</span></div>
+    <div class="ticker-item">Processing Time <span class="ticker-up">~15 min</span></div>
+    <div class="ticker-item">USDT/USD <span class="ticker-up">1.0002 ↑</span></div>
+    <div class="ticker-item">EcoCash → Weltrade <span class="ticker-up">Active</span></div>
+    <div class="ticker-item">Min Deposit <span class="ticker-up">$10</span></div>
+    <div class="ticker-item">Max Deposit <span class="ticker-up">$5,000</span></div>
+  </div>
+</div>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="orb orb-1"></div>
+  <div class="orb orb-2"></div>
+  <div class="hero-inner">
+    <div class="hero-text">
+      <div class="hero-badge"><div class="badge-dot"></div> Now live in Zimbabwe</div>
+      <h1>
+        Fund your trades<br>
+        <span class="accent">locally.</span>
+        <span class="line2">Instantly.</span>
+      </h1>
+      <p>
+        Move money between EcoCash, bank transfers and your Binance or forex broker account — without leaving Zimbabwe. Fast, transparent, minimal fees.
+      </p>
+      <div class="hero-actions">
+        <a href="{% url 'register' %}" class="btn-hero">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+          Start Trading
+        </a>
+        <a href="#how" class="btn-hero-outline">How it works</a>
+      </div>
+    </div>
+
+    <!-- LIVE CARD -->
+    <div class="hero-visual">
+      <div class="tx-card">
+        <div class="tx-header">
+          <div class="tx-title">Live Transaction</div>
+          <div class="tx-live"><div class="live-dot"></div> Processing</div>
+        </div>
+        <div class="tx-flow">
+          <div class="tx-step">
+            <div class="tx-icon eco">📱</div>
+            <div>
+              <div class="tx-label">Sending from</div>
+              <div class="tx-value">EcoCash +263 77•••••78</div>
+            </div>
+          </div>
+          <div class="tx-step" style="justify-content:center;padding:0.5rem">
+            <div class="tx-icon arrow">↓</div>
+          </div>
+          <div class="tx-step">
+            <div class="tx-icon bin">🟡</div>
+            <div>
+              <div class="tx-label">Destination</div>
+              <div class="tx-value">Binance UID 4829••••01</div>
+            </div>
+          </div>
+        </div>
+        <div class="tx-amount-box">
+          <div>
+            <div class="amount-label">You receive</div>
+            <div class="amount-value">{{ sample_deposit_credit }} USDT</div>
+          </div>
+          <div class="status-pill"><div class="live-dot"></div> Sending</div>
+        </div>
+        <div style="margin-top:1rem;display:flex;justify-content:space-between;font-size:0.75rem;color:var(--muted);font-family:var(--mono)">
+          <span>Ref: TXN-K2M9XQ4R01</span>
+          <span>Fee: ${{ sample_deposit_fee }}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- STATS -->
+<div class="stats-strip">
+  <div class="stats-inner">
+    <div>
+      <div class="stat-num">$0</div>
+      <div class="stat-desc">Volume processed (simulation)</div>
+    </div>
+    <div>
+      <div class="stat-num">{{ deposit_fee_percent }}%</div>
+      <div class="stat-desc">Current deposit fee</div>
+    </div>
+    <div>
+      <div class="stat-num">~15m</div>
+      <div class="stat-desc">Average processing time</div>
+    </div>
+    <div>
+      <div class="stat-num">5+</div>
+      <div class="stat-desc">Supported platforms</div>
+    </div>
+  </div>
+</div>
+
+<!-- HOW IT WORKS -->
+<section id="how">
+  <div class="section-inner">
+    <div class="section-tag">// how it works</div>
+    <h2 class="section-title">Four steps from cash to crypto</h2>
+    <p class="section-sub">No complicated wallets. No middlemen. Just a clean bridge between your EcoCash and your trading account.</p>
+    <div class="steps-grid">
+      <div class="step-card">
+        <div class="step-num-big">01</div>
+        <span class="step-emoji">📝</span>
+        <div class="step-title">Submit a request</div>
+        <p class="step-desc">Tell us the amount, which platform you trade on, and your account ID. Takes 60 seconds.</p>
+      </div>
+      <div class="step-card">
+        <div class="step-num-big">02</div>
+        <span class="step-emoji">📱</span>
+        <div class="step-title">Pay locally</div>
+        <p class="step-desc">Send payment via EcoCash or bank transfer to our details. Use your reference code.</p>
+      </div>
+      <div class="step-card">
+        <div class="step-num-big">03</div>
+        <span class="step-emoji">✅</span>
+        <div class="step-title">Payment confirmed</div>
+        <p class="step-desc">We verify your payment. In Phase 2 this is automatic. Right now admin confirms within minutes.</p>
+      </div>
+      <div class="step-card">
+        <div class="step-num-big">04</div>
+        <span class="step-emoji">🚀</span>
+        <div class="step-title">Funds arrive</div>
+        <p class="step-desc">USDT lands in your Binance wallet or broker account. You get a notification.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FEATURES -->
+<section id="features" class="features-section">
+  <div class="section-inner">
+    <div class="section-tag">// features</div>
+    <h2 class="section-title">Built for Zimbabwean traders</h2>
+    <p class="section-sub">Every feature is designed around the specific friction traders in Zimbabwe face when moving money.</p>
+    <div class="features-grid">
+      <div class="feature-card">
+        <div class="feature-icon fi-teal">💸</div>
+        <div class="feature-title">EcoCash & Bank Support</div>
+        <p class="feature-desc">Deposit and withdraw using EcoCash, InnBucks, OneMoney, or standard bank transfer. No crypto wallet required to get started.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon fi-gold">📊</div>
+        <div class="feature-title">Live Rate Calculator</div>
+        <p class="feature-desc">See the exact USDT amount you'll receive before you send anything. Rates update in real time. No surprises.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon fi-blue">🔐</div>
+        <div class="feature-title">Full Transaction History</div>
+        <p class="feature-desc">Every deposit and withdrawal is tracked with a unique reference code and auditable status trail.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon fi-teal">⚡</div>
+        <div class="feature-title">Admin-Controlled Fees</div>
+        <p class="feature-desc">Current fees are {{ deposit_fee_percent }}% for deposits and {{ withdrawal_fee_percent }}% for withdrawals. Every transaction stores its own fee snapshot for clarity.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon fi-gold">🔄</div>
+        <div class="feature-title">Two-Way Bridge</div>
+        <p class="feature-desc">Deposit to fund accounts. Withdraw to convert profits back to local cash. The bridge works both ways.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon fi-blue">🛡️</div>
+        <div class="feature-title">Admin-Verified Transfers</div>
+        <p class="feature-desc">Every transaction is reviewed before funds move. Adding a human checkpoint that prevents errors and fraud.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PLATFORMS -->
+<section id="platforms">
+  <div class="section-inner" style="text-align:center">
+    <div class="section-tag" style="text-align:center">// supported platforms</div>
+    <h2 class="section-title">Works with your broker</h2>
+    <p class="section-sub" style="margin: 0 auto 0; text-align:center">
+      We currently support deposits and withdrawals to these trading platforms. More coming soon.
+    </p>
+    <div class="platforms-row">
+      <div class="platform-pill"><span>🟡</span> Binance</div>
+      <div class="platform-pill"><span>📈</span> Weltrade</div>
+      <div class="platform-pill"><span>📉</span> Exness</div>
+      <div class="platform-pill"><span>💹</span> XM</div>
+      <div class="platform-pill"><span>🌐</span> Other Brokers</div>
+    </div>
+    <div style="margin-top:2rem;font-size:0.82rem;color:var(--muted)">
+      Not seeing your broker? <a href="{% url 'register' %}" style="color:var(--teal)">Register and let us know</a> — we add new platforms based on demand.
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="cta-section">
+  <div class="section-inner" style="text-align:center">
+    <div class="section-tag" style="text-align:center">// get started today</div>
+    <h2 class="section-title" style="max-width:600px;margin:0 auto 1rem">
+      Ready to fund your trading account?
+    </h2>
+    <p class="section-sub">
+      Create a free account in under 2 minutes. No KYC required to start. Simulation mode lets you test the full flow before going live.
+    </p>
+    <div class="cta-actions">
+      <a href="{% url 'register' %}" class="btn-hero">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+        Create Free Account
+      </a>
+      <a href="{% url 'login' %}" class="btn-hero-outline">Sign In</a>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <a href="{% url 'home' %}" class="logo">Trade<span>Gate</span></a>
+  <p style="margin-top:0.5rem">Zimbabwe's local forex payment bridge — simulated platform for testing</p>
+  <div style="margin-top:1.5rem;display:flex;gap:1.5rem;justify-content:center;font-size:0.82rem">
+    <a href="{% url 'login' %}" style="color:var(--muted);text-decoration:none">Login</a>
+    <a href="{% url 'register' %}" style="color:var(--muted);text-decoration:none">Register</a>
+    <a href="{% url 'rates' %}" style="color:var(--muted);text-decoration:none">Rates</a>
+    <a href="#how" style="color:var(--muted);text-decoration:none">How it works</a>
+  </div>
+  <div class="sim-note">⚡ Running in simulation mode — no real funds are processed</div>
+</footer>
+
+<script>
+  // Animate sections on scroll
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        e.target.style.animation = 'fadeUp 0.6s ease both';
+        observer.unobserve(e.target);
+      }
+    });
+  }, { threshold: 0.1 });
+
+  document.querySelectorAll('.step-card, .feature-card').forEach(el => {
+    el.style.opacity = '0';
+    observer.observe(el);
+  });
+
+  // Navbar scroll effect
+  window.addEventListener('scroll', () => {
+    const nav = document.querySelector('nav');
+    nav.style.background = window.scrollY > 60
+      ? 'rgba(8,12,16,0.98)'
+      : 'rgba(8,12,16,0.85)';
+  });
+</script>
+</body>
+</html>

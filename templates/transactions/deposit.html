@@ -1,0 +1,167 @@
+{% extends 'base.html' %}
+{% block title %}Deposit — TradeGate ZW{% endblock %}
+{% block content %}
+<div class="row py-4 px-2">
+  <div class="col-md-2 d-none d-md-block">
+    <nav class="nav flex-column pt-2">
+      <a class="nav-link" href="{% url 'dashboard' %}"><i class="fas fa-th-large me-2"></i>Dashboard</a>
+      <a class="nav-link active" href="{% url 'deposit' %}"><i class="fas fa-arrow-circle-down me-2"></i>Deposit</a>
+      <a class="nav-link" href="{% url 'withdrawal' %}"><i class="fas fa-arrow-circle-up me-2"></i>Withdraw</a>
+      <a class="nav-link" href="{% url 'transaction_list' %}"><i class="fas fa-history me-2"></i>History</a>
+    </nav>
+  </div>
+  <div class="col-md-10 main-content">
+    <h4 class="fw-bold mb-1"><i class="fas fa-arrow-circle-down me-2" style="color:var(--primary)"></i>New Deposit</h4>
+    <p style="color:var(--muted)" class="mb-4">Fund your trading account using local payment methods</p>
+
+    <div class="row g-4">
+      <div class="col-md-7">
+        <div class="card">
+          <div class="card-header">Deposit Details</div>
+          <div class="card-body p-4">
+            <form method="post" id="depositForm">
+              {% csrf_token %}
+              {% if form.non_field_errors %}
+              <div class="alert alert-danger">
+                {{ form.non_field_errors }}
+              </div>
+              {% endif %}
+              <div class="mb-3">
+                <label class="form-label" style="color:var(--muted);font-size:0.82rem">TRADING PLATFORM</label>
+                {{ form.platform }}
+                {% if form.platform.errors %}<div class="text-danger small mt-1">{{ form.platform.errors }}</div>{% endif %}
+              </div>
+              <div class="mb-3">
+                <label class="form-label" style="color:var(--muted);font-size:0.82rem">AMOUNT (USD)</label>
+                {{ form.amount }}
+                {% if form.amount.errors %}<div class="text-danger small mt-1">{{ form.amount.errors }}</div>{% endif %}
+                <small style="color:var(--muted)">Current deposit fee: <span style="color:var(--warning)">{{ deposit_fee_percent }}%</span></small>
+                <div id="feePreview" class="mt-2 p-2" style="background:var(--secondary);border-radius:8px;font-size:0.85rem;display:none">
+                  <div class="d-flex justify-content-between">
+                    <span id="feeLabel" style="color:var(--muted)">Deposit fee:</span>
+                    <span id="feeAmt" style="color:var(--warning)">-$0.00</span>
+                  </div>
+                  <div class="d-flex justify-content-between mt-1">
+                    <span style="color:var(--muted)">Trading account credit:</span>
+                    <span id="receiveAmt" style="color:var(--success);font-weight:600">$0.00 USDT</span>
+                  </div>
+                </div>
+              </div>
+              <div class="mb-3">
+                <label class="form-label" style="color:var(--muted);font-size:0.82rem">WALLET / ACCOUNT ID</label>
+                {{ form.destination_account }}
+                {% if form.destination_account.errors %}<div class="text-danger small mt-1">{{ form.destination_account.errors }}</div>{% endif %}
+                <small style="color:var(--muted)">Your Binance UID or broker account number</small>
+              </div>
+              <div class="mb-4">
+                <label class="form-label" style="color:var(--muted);font-size:0.82rem">PAY USING</label>
+                {{ form.payment_method }}
+                {% if form.payment_method.errors %}<div class="text-danger small mt-1">{{ form.payment_method.errors }}</div>{% endif %}
+              </div>
+              <div class="mb-4" id="mobilePaymentFields">
+                <label class="form-label" style="color:var(--muted);font-size:0.82rem">YOUR ECOCASH / MOBILE NUMBER</label>
+                {{ form.payer_number }}
+                {% if form.payer_number.errors %}<div class="text-danger small mt-1">{{ form.payer_number.errors }}</div>{% endif %}
+                <small style="color:var(--muted)">So we can match your payment</small>
+              </div>
+              <div class="mb-3" id="bankNameField" style="display:none">
+                <label class="form-label" style="color:var(--muted);font-size:0.82rem">YOUR BANK NAME</label>
+                {{ form.bank_name }}
+                {% if form.bank_name.errors %}<div class="text-danger small mt-1">{{ form.bank_name.errors }}</div>{% endif %}
+              </div>
+              <div class="mb-4" id="bankAccountField" style="display:none">
+                <label class="form-label" style="color:var(--muted);font-size:0.82rem">YOUR BANK ACCOUNT</label>
+                {{ form.bank_account }}
+                {% if form.bank_account.errors %}<div class="text-danger small mt-1">{{ form.bank_account.errors }}</div>{% endif %}
+                <small style="color:var(--muted)">Used to match your incoming bank transfer</small>
+              </div>
+              <button type="submit" class="btn btn-primary w-100 py-2 fw-bold">
+                <i class="fas fa-arrow-right me-2"></i>Submit Deposit Request
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-md-5">
+        <div class="card mb-3">
+          <div class="card-header"><i class="fas fa-info-circle me-2" style="color:var(--primary)"></i>How It Works</div>
+          <div class="card-body p-3">
+            <div class="d-flex gap-3 mb-3">
+              <div class="step-num">1</div>
+              <div><strong>Submit this form</strong><br><small style="color:var(--muted)">Tell us amount, platform and where to send funds</small></div>
+            </div>
+            <div class="d-flex gap-3 mb-3">
+              <div class="step-num">2</div>
+              <div><strong>Send payment</strong><br><small style="color:var(--muted)">Pay via EcoCash or bank to our details below</small></div>
+            </div>
+            <div class="d-flex gap-3 mb-3">
+              <div class="step-num">3</div>
+              <div><strong>Payment confirmed</strong><br><small style="color:var(--muted)">We verify your payment (manual or automated)</small></div>
+            </div>
+            <div class="d-flex gap-3">
+              <div class="step-num">4</div>
+              <div><strong>Funds sent</strong><br><small style="color:var(--muted)">USDT arrives in your trading account</small></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card mb-3">
+          <div class="card-header"><i class="fas fa-mobile-alt me-2" style="color:var(--primary)"></i>Payment Details</div>
+          <div class="card-body p-3">
+            <div class="mb-3">
+              <div style="color:var(--muted);font-size:0.8rem">ECOCASH NUMBER</div>
+              <div style="font-family:monospace;font-size:1.1rem;color:var(--primary)">{{ ecocash_number }}</div>
+            </div>
+            <div>
+              <div style="color:var(--muted);font-size:0.8rem">BANK TRANSFER</div>
+              <div style="font-size:0.9rem">{{ bank_name }}<br>
+              <span style="font-family:monospace;color:var(--primary)">{{ bank_account }}</span></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="alert-sim p-3" style="border-radius:10px;font-size:0.82rem">
+          <i class="fas fa-flask me-1"></i><strong>Simulation:</strong>
+          After submitting, you can click <strong>Simulate Payment</strong> to instantly complete the transaction without real payment.
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script>
+const depositAmountInput = document.querySelector('[name=amount]');
+const depositPaymentMethodInput = document.querySelector('[name=payment_method]');
+const mobilePaymentFields = document.getElementById('mobilePaymentFields');
+const bankNameField = document.getElementById('bankNameField');
+const bankAccountField = document.getElementById('bankAccountField');
+
+function updateDepositFeePreview() {
+  const amt = parseFloat(depositAmountInput.value) || 0;
+  const feePercent = parseFloat('{{ deposit_fee_percent|default:"0" }}') || 0;
+  const fee = amt * (feePercent / 100);
+  const receive = amt - fee;
+  document.getElementById('feePreview').style.display = amt > 0 ? 'block' : 'none';
+  document.getElementById('feeLabel').textContent = 'Deposit fee (' + feePercent.toFixed(2) + '%):';
+  document.getElementById('feeAmt').textContent = '-$' + fee.toFixed(2);
+  document.getElementById('receiveAmt').textContent = '$' + receive.toFixed(2) + ' USDT';
+}
+
+function toggleDepositPaymentFields() {
+  const paymentMethod = depositPaymentMethodInput.value;
+  const isBankTransfer = paymentMethod === 'bank_transfer';
+
+  mobilePaymentFields.style.display = isBankTransfer ? 'none' : 'block';
+  bankNameField.style.display = isBankTransfer ? 'block' : 'none';
+  bankAccountField.style.display = isBankTransfer ? 'block' : 'none';
+}
+
+depositAmountInput.addEventListener('input', updateDepositFeePreview);
+depositPaymentMethodInput.addEventListener('change', toggleDepositPaymentFields);
+
+updateDepositFeePreview();
+toggleDepositPaymentFields();
+</script>
+{% endblock %}

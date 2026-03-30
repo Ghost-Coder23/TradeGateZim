@@ -1,0 +1,88 @@
+{% extends 'base.html' %}
+{% block title %}Rates — TradeGate ZW{% endblock %}
+{% block content %}
+<div class="row justify-content-center py-5">
+  <div class="col-md-7">
+    <h4 class="fw-bold mb-4"><i class="fas fa-chart-line me-2" style="color:var(--primary)"></i>Exchange Rates</h4>
+    <div class="card mb-4">
+      <div class="card-header d-flex justify-content-between">
+        <span>Current Rates</span>
+        {% if rates.simulated %}<span style="color:var(--warning);font-size:0.78rem;font-family:monospace">⚡ SIMULATED</span>{% endif %}
+      </div>
+      <div class="card-body p-0">
+        <div class="px-4 py-3" style="border-bottom:1px solid var(--border)">
+          <div class="d-flex justify-content-between align-items-center">
+            <span style="color:var(--muted)">Market Rate (USD/USDT)</span>
+            <span style="font-family:monospace;font-size:1.2rem">{{ rates.usdt_rate }}</span>
+          </div>
+        </div>
+        <div class="px-4 py-3" style="border-bottom:1px solid var(--border)">
+          <div class="d-flex justify-content-between align-items-center">
+            <span style="color:var(--muted)">Deposit Fee</span>
+            <span style="font-family:monospace;color:var(--warning)">{{ rates.deposit_fee_percent }}%</span>
+          </div>
+        </div>
+        <div class="px-4 py-3" style="border-bottom:1px solid var(--border)">
+          <div class="d-flex justify-content-between align-items-center">
+            <span style="color:var(--muted)">Withdrawal Fee</span>
+            <span style="font-family:monospace;color:var(--info)">{{ rates.withdrawal_fee_percent }}%</span>
+          </div>
+        </div>
+        <div class="px-4 py-3">
+          <div class="d-flex justify-content-between align-items-center">
+            <span style="color:var(--muted)">Deposit Net Rate (per $1)</span>
+            <span style="font-family:monospace;font-size:1.2rem;color:var(--success)">{{ rates.deposit_effective_rate }} USDT</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card mb-4">
+      <div class="card-header">Fee Calculator</div>
+      <div class="card-body p-4">
+        <label class="form-label" style="color:var(--muted);font-size:0.82rem">ENTER AMOUNT (USD)</label>
+        <input type="number" id="calcAmt" class="form-control mb-3" placeholder="100">
+        <div id="calcResult" style="display:none">
+          <div class="d-flex justify-content-between py-2" style="border-bottom:1px solid var(--border)">
+            <span style="color:var(--muted)">You send:</span><span id="sendAmt" style="font-family:monospace"></span>
+          </div>
+          <div class="d-flex justify-content-between py-2" style="border-bottom:1px solid var(--border)">
+            <span style="color:var(--muted)">Deposit fee:</span><span id="depositFeeAmt" style="font-family:monospace;color:var(--warning)"></span>
+          </div>
+          <div class="d-flex justify-content-between py-2">
+            <span style="color:var(--muted)">Deposit credit:</span><span id="depositReceiveAmt" style="font-family:monospace;color:var(--success);font-weight:700"></span>
+          </div>
+          <div class="d-flex justify-content-between py-2" style="border-top:1px solid var(--border)">
+            <span style="color:var(--muted)">Withdrawal fee:</span><span id="withdrawFeeAmt" style="font-family:monospace;color:var(--info)"></span>
+          </div>
+          <div class="d-flex justify-content-between py-2">
+            <span style="color:var(--muted)">Withdrawal payout:</span><span id="withdrawReceiveAmt" style="font-family:monospace;color:var(--success);font-weight:700"></span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script>
+document.getElementById('calcAmt').addEventListener('input', function() {
+  const amt = parseFloat(this.value) || 0;
+  if (amt > 0) {
+    const depositFeePercent = parseFloat('{{ rates.deposit_fee_percent|default:"0" }}') || 0;
+    const withdrawalFeePercent = parseFloat('{{ rates.withdrawal_fee_percent|default:"0" }}') || 0;
+    const depositFee = amt * (depositFeePercent / 100);
+    const depositReceive = amt - depositFee;
+    const withdrawalFee = amt * (withdrawalFeePercent / 100);
+    const withdrawalReceive = amt - withdrawalFee;
+    document.getElementById('calcResult').style.display = 'block';
+    document.getElementById('sendAmt').textContent = '$' + amt.toFixed(2);
+    document.getElementById('depositFeeAmt').textContent = '-$' + depositFee.toFixed(2) + ' (' + depositFeePercent.toFixed(2) + '%)';
+    document.getElementById('depositReceiveAmt').textContent = '$' + depositReceive.toFixed(2) + ' USDT';
+    document.getElementById('withdrawFeeAmt').textContent = '-$' + withdrawalFee.toFixed(2) + ' (' + withdrawalFeePercent.toFixed(2) + '%)';
+    document.getElementById('withdrawReceiveAmt').textContent = '$' + withdrawalReceive.toFixed(2);
+  } else {
+    document.getElementById('calcResult').style.display = 'none';
+  }
+});
+</script>
+{% endblock %}

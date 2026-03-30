@@ -1,0 +1,86 @@
+{% extends 'base.html' %}
+{% block title %}Profile — TradeGate ZW{% endblock %}
+{% block content %}
+<div class="row py-4 px-2">
+  <div class="col-md-2 d-none d-md-block">
+    <nav class="nav flex-column pt-2">
+      <a class="nav-link" href="{% url 'dashboard' %}"><i class="fas fa-th-large me-2"></i>Dashboard</a>
+      <a class="nav-link" href="{% url 'deposit' %}"><i class="fas fa-arrow-circle-down me-2"></i>Deposit</a>
+      <a class="nav-link" href="{% url 'withdrawal' %}"><i class="fas fa-arrow-circle-up me-2"></i>Withdraw</a>
+      <a class="nav-link" href="{% url 'transaction_list' %}"><i class="fas fa-history me-2"></i>History</a>
+      <a class="nav-link active" href="{% url 'profile' %}"><i class="fas fa-user me-2"></i>Profile</a>
+    </nav>
+  </div>
+  <div class="col-md-10 main-content">
+    <h4 class="fw-bold mb-4"><i class="fas fa-user-circle me-2" style="color:var(--primary)"></i>My Profile</h4>
+    <div class="row">
+      <div class="col-md-6">
+        <div class="card">
+          <div class="card-header">Personal Details</div>
+          <div class="card-body p-4">
+            <form method="post">
+              {% csrf_token %}
+              <div class="row g-3">
+                <div class="col-6">
+                  <label class="form-label" style="color:var(--muted);font-size:0.82rem">FIRST NAME</label>
+                  <input type="text" name="first_name" class="form-control" value="{{ user.first_name }}">
+                </div>
+                <div class="col-6">
+                  <label class="form-label" style="color:var(--muted);font-size:0.82rem">LAST NAME</label>
+                  <input type="text" name="last_name" class="form-control" value="{{ user.last_name }}">
+                </div>
+                <div class="col-12">
+                  <label class="form-label" style="color:var(--muted);font-size:0.82rem">EMAIL</label>
+                  <input type="text" class="form-control" value="{{ user.email }}" disabled>
+                </div>
+                <div class="col-12">
+                  <label class="form-label" style="color:var(--muted);font-size:0.82rem">PHONE</label>
+                  <input type="text" name="phone" class="form-control" value="{{ user.phone }}">
+                </div>
+                <div class="col-12">
+                  <label class="form-label" style="color:var(--muted);font-size:0.82rem">COUNTRY</label>
+                  <select name="country" class="form-select">
+                    {% for val, label in user.COUNTRY_CHOICES %}
+                    <option value="{{ val }}" {% if user.country == val %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                  </select>
+                </div>
+                <div class="col-12">
+                  <button type="submit" class="btn btn-primary">Save Changes</button>
+                </div>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="card">
+          <div class="card-header">Account Status</div>
+          <div class="card-body p-4">
+            <div class="d-flex justify-content-between py-2" style="border-bottom:1px solid var(--border)">
+              <span style="color:var(--muted)">Username</span>
+              <span class="fw-bold">{{ user.username }}</span>
+            </div>
+            <div class="d-flex justify-content-between py-2" style="border-bottom:1px solid var(--border)">
+              <span style="color:var(--muted)">Member Since</span>
+              <span>{{ user.created_at|date:"M d, Y" }}</span>
+            </div>
+            <div class="d-flex justify-content-between py-2" style="border-bottom:1px solid var(--border)">
+              <span style="color:var(--muted)">Email Verified</span>
+              <span>{% if user.email_verified %}<span style="color:var(--success)">✓ Verified</span>{% else %}<span style="color:var(--warning)">Pending</span>{% endif %}</span>
+            </div>
+            <div class="d-flex justify-content-between py-2">
+              <span style="color:var(--muted)">Account Type</span>
+              <span>{% if user.is_staff %}<span style="color:var(--primary)">Admin</span>{% else %}Trader{% endif %}</span>
+            </div>
+            <div class="alert-sim p-3 mt-3" style="font-size:0.82rem;border-radius:8px">
+              <i class="fas fa-info-circle me-1"></i>
+              KYC verification will be required when going live. Currently simulated.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

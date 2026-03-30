@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}TradeGate ZW{% endblock %}</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #00d4aa;
+            --primary-dark: #00b891;
+            --secondary: #1a1f2e;
+            --bg: #0d1117;
+            --card-bg: #161b27;
+            --border: #21273a;
+            --text: #e6edf3;
+            --muted: #7d8590;
+            --success: #3fb950;
+            --warning: #d29922;
+            --danger: #f85149;
+            --info: #58a6ff;
+        }
+        * { box-sizing: border-box; }
+        body {
+            font-family: 'Space Grotesk', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+        }
+        .navbar {
+            background: var(--secondary) !important;
+            border-bottom: 1px solid var(--border);
+            padding: 1rem 0;
+        }
+        .navbar-brand {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: var(--primary) !important;
+            letter-spacing: -0.5px;
+        }
+        .navbar-brand span { color: var(--text); }
+        .nav-link { color: var(--muted) !important; font-weight: 500; transition: color 0.2s; }
+        .nav-link:hover, .nav-link.active { color: var(--primary) !important; }
+        .sim-banner {
+            background: linear-gradient(90deg, #2d1f00, #3d2900);
+            border-bottom: 1px solid #d29922;
+            padding: 6px 0;
+            text-align: center;
+            font-size: 0.8rem;
+            color: #d29922;
+            font-family: 'JetBrains Mono', monospace;
+        }
+        .sim-banner i { margin-right: 6px; }
+        .card {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+        }
+        .card-header {
+            background: transparent;
+            border-bottom: 1px solid var(--border);
+            padding: 1.2rem 1.5rem;
+            font-weight: 600;
+        }
+        .btn-primary {
+            background: var(--primary);
+            border-color: var(--primary);
+            color: #000;
+            font-weight: 600;
+        }
+        .btn-primary:hover {
+            background: var(--primary-dark);
+            border-color: var(--primary-dark);
+            color: #000;
+        }
+        .btn-outline-primary {
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+        .btn-outline-primary:hover { background: var(--primary); color: #000; }
+        .form-control, .form-select {
+            background: var(--secondary);
+            border: 1px solid var(--border);
+            color: var(--text);
+            border-radius: 8px;
+        }
+        .form-control:focus, .form-select:focus {
+            background: var(--secondary);
+            border-color: var(--primary);
+            color: var(--text);
+            box-shadow: 0 0 0 3px rgba(0,212,170,0.15);
+        }
+        .stat-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.5rem;
+            transition: border-color 0.2s, transform 0.2s;
+        }
+        .stat-card:hover { border-color: var(--primary); transform: translateY(-2px); }
+        .stat-value { font-size: 2rem; font-weight: 700; font-family: 'JetBrains Mono', monospace; }
+        .stat-label { color: var(--muted); font-size: 0.85rem; margin-top: 4px; }
+        .badge-pending { background: rgba(210,153,34,0.2); color: #d29922; border: 1px solid #d29922; }
+        .badge-processing { background: rgba(88,166,255,0.2); color: #58a6ff; border: 1px solid #58a6ff; }
+        .badge-completed { background: rgba(63,185,80,0.2); color: #3fb950; border: 1px solid #3fb950; }
+        .badge-rejected { background: rgba(248,81,73,0.2); color: #f85149; border: 1px solid #f85149; }
+        .badge { border-radius: 6px; padding: 4px 10px; font-weight: 600; font-size: 0.78rem; }
+        .table { color: var(--text); }
+        .table > :not(caption) > * > * { background: transparent; color: var(--text); border-color: var(--border); }
+        .table-hover tbody tr:hover > * { background: rgba(255,255,255,0.03); }
+        .ref-code { font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; color: var(--primary); }
+        .alert-sim {
+            background: rgba(210,153,34,0.1);
+            border: 1px solid rgba(210,153,34,0.3);
+            color: #d29922;
+            border-radius: 10px;
+        }
+        .step-box {
+            background: var(--secondary);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 1.2rem;
+            position: relative;
+        }
+        .step-num {
+            width: 28px; height: 28px;
+            background: var(--primary);
+            color: #000;
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-weight: 700; font-size: 0.85rem;
+            flex-shrink: 0;
+        }
+        .rate-ticker {
+            font-family: 'JetBrains Mono', monospace;
+            color: var(--primary);
+            font-size: 0.9rem;
+        }
+        .sidebar { min-height: calc(100vh - 120px); }
+        .sidebar .nav-link {
+            color: var(--muted) !important;
+            padding: 0.6rem 1rem;
+            border-radius: 8px;
+            margin-bottom: 2px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .sidebar .nav-link:hover, .sidebar .nav-link.active {
+            background: rgba(0,212,170,0.1);
+            color: var(--primary) !important;
+        }
+        .sidebar .nav-link i { width: 18px; text-align: center; }
+        .main-content { padding: 2rem; }
+        @media (max-width: 768px) {
+            .sidebar { min-height: auto; padding: 1rem; }
+            .main-content { padding: 1rem; }
+            .stat-value { font-size: 1.5rem; }
+        }
+    </style>
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+{% if simulation_mode %}
+<div class="sim-banner">
+    <i class="fas fa-flask"></i> SIMULATION MODE — No real money is moving. All transactions are simulated for testing.
+    <a href="#" class="text-warning ms-2" data-bs-toggle="modal" data-bs-target="#simModal">What does this mean?</a>
+</div>
+{% endif %}
+
+<nav class="navbar navbar-expand-lg">
+    <div class="container-fluid px-4">
+        <a class="navbar-brand" href="{% if user.is_authenticated %}{% url 'dashboard' %}{% else %}{% url 'home' %}{% endif %}">Trade<span>Gate</span> <small style="font-size:0.7rem;color:var(--primary);">ZW</small></a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navMenu">
+            <span style="color:var(--text)">☰</span>
+        </button>
+        <div class="collapse navbar-collapse" id="navMenu">
+            {% if user.is_authenticated %}
+            <ul class="navbar-nav ms-auto align-items-center gap-2">
+                <li class="nav-item"><a class="nav-link" href="{% url 'deposit' %}"><i class="fas fa-arrow-down me-1"></i>Deposit</a></li>
+                <li class="nav-item"><a class="nav-link" href="{% url 'withdrawal' %}"><i class="fas fa-arrow-up me-1"></i>Withdraw</a></li>
+                <li class="nav-item"><a class="nav-link" href="{% url 'transaction_list' %}"><i class="fas fa-list me-1"></i>History</a></li>
+                <li class="nav-item"><a class="nav-link" href="{% url 'rates' %}"><i class="fas fa-chart-line me-1"></i>Rates</a></li>
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">
+                        <i class="fas fa-user-circle me-1"></i>{{ user.first_name }}
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-end" style="background:var(--secondary);border-color:var(--border)">
+                        <li><a class="dropdown-item" style="color:var(--text)" href="{% url 'profile' %}">Profile</a></li>
+                        {% if user.is_staff %}
+                        <li><a class="dropdown-item" style="color:var(--primary)" href="{% url 'admin_panel' %}">Admin Panel</a></li>
+                        <li><a class="dropdown-item" style="color:var(--primary)" href="{% url 'admin:index' %}">Django Admin</a></li>
+                        {% endif %}
+                        <li><hr class="dropdown-divider" style="border-color:var(--border)"></li>
+                        <li>
+                            <a class="dropdown-item" style="color:var(--danger)" href="{% url 'logout' %}">Logout</a>
+                        </li>
+                    </ul>
+                </li>
+            </ul>
+            {% else %}
+            <ul class="navbar-nav ms-auto gap-2">
+                <li><a class="nav-link" href="{% url 'rates' %}">Rates</a></li>
+                <li><a class="btn btn-outline-primary btn-sm" href="{% url 'login' %}">Login</a></li>
+                <li><a class="btn btn-primary btn-sm" href="{% url 'register' %}">Register</a></li>
+            </ul>
+            {% endif %}
+        </div>
+    </div>
+</nav>
+
+<div class="container-fluid">
+    {% if messages %}
+    <div class="row"><div class="col-12 px-4 pt-3">
+        {% for message in messages %}
+        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert" style="border-radius:10px">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        {% endfor %}
+    </div></div>
+    {% endif %}
+    {% block content %}{% endblock %}
+</div>
+
+<!-- Simulation Info Modal -->
+<div class="modal fade" id="simModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" style="background:var(--card-bg);border-color:var(--border)">
+            <div class="modal-header" style="border-color:var(--border)">
+                <h5 class="modal-title"><i class="fas fa-flask text-warning me-2"></i>Simulation Mode</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>This platform is running in <strong style="color:#d29922">simulation mode</strong>. This means:</p>
+                <ul>
+                    <li>No real money is transferred</li>
+                    <li>EcoCash confirmations are simulated</li>
+                    <li>Binance API calls are simulated</li>
+                    <li>Exchange rates are simulated (near real)</li>
+                </ul>
+                <p class="mb-0">To go live, the admin needs to:</p>
+                <ol>
+                    <li>Add real Binance API keys</li>
+                    <li>Set up EcoCash Merchant account</li>
+                    <li>Set <code>SIMULATION_MODE = False</code> in settings</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+<script>
+function getCookie(name) {
+    const value = `; ${document.cookie}`;
+    const parts = value.split(`; ${name}=`);
+    if (parts.length === 2) {
+        return parts.pop().split(';').shift();
+    }
+    return '';
+}
+
+// Django rotates the CSRF token after login. If the user submits a POST form
+// from an older tab, refresh the hidden token from the current cookie first.
+document.addEventListener('submit', function(event) {
+    const form = event.target;
+    if (!(form instanceof HTMLFormElement)) {
+        return;
+    }
+
+    const csrfInput = form.querySelector('input[name="csrfmiddlewaretoken"]');
+    if (!csrfInput) {
+        return;
+    }
+
+    const currentToken = getCookie('csrftoken');
+    if (currentToken) {
+        csrfInput.value = currentToken;
+    }
+});
+</script>
+{% block extra_js %}{% endblock %}
+</body>
+</html>

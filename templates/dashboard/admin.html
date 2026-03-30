@@ -1,0 +1,369 @@
+{% extends 'base.html' %}
+{% block title %}Admin Panel — TradeGate ZW{% endblock %}
+{% block content %}
+<div class="row py-4 px-2">
+  <div class="col-md-2 d-none d-md-block">
+    <nav class="nav flex-column pt-2">
+      <a class="nav-link" href="{% url 'dashboard' %}"><i class="fas fa-th-large me-2"></i>Dashboard</a>
+      <a class="nav-link active" href="{% url 'admin_panel' %}"><i class="fas fa-shield-alt me-2"></i>Admin Panel</a>
+      <a class="nav-link" href="{% url 'admin:index' %}"><i class="fas fa-cog me-2"></i>Django Admin</a>
+    </nav>
+  </div>
+  <div class="col-md-10 main-content">
+    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
+      <div>
+        <h4 class="fw-bold mb-0"><i class="fas fa-shield-alt me-2" style="color:var(--primary)"></i>Admin Panel</h4>
+        <small style="color:var(--muted)">Operational queue for approving, rejecting, retrying, and reconciling transactions</small>
+      </div>
+      <div class="d-flex gap-2">
+        <a href="{% url 'admin:index' %}" class="btn btn-outline-primary btn-sm">Django Admin</a>
+        <a href="{% url 'admin:transactions_transaction_changelist' %}" class="btn btn-primary btn-sm">Full Queue</a>
+      </div>
+    </div>
+
+    <div class="row g-3 mb-4">
+      <div class="col-6 col-md-2">
+        <div class="stat-card text-center">
+          <div class="stat-value" style="font-size:1.5rem">{{ stats.total_users }}</div>
+          <div class="stat-label">Users</div>
+        </div>
+      </div>
+      <div class="col-6 col-md-2">
+        <div class="stat-card text-center">
+          <div class="stat-value" style="font-size:1.5rem;color:var(--warning)">{{ stats.pending }}</div>
+          <div class="stat-label">Pending</div>
+        </div>
+      </div>
+      <div class="col-6 col-md-2">
+        <div class="stat-card text-center">
+          <div class="stat-value" style="font-size:1.5rem;color:var(--info)">{{ stats.processing }}</div>
+          <div class="stat-label">Processing</div>
+        </div>
+      </div>
+      <div class="col-6 col-md-2">
+        <div class="stat-card text-center">
+          <div class="stat-value" style="font-size:1.5rem;color:var(--success)">{{ stats.completed }}</div>
+          <div class="stat-label">Completed</div>
+        </div>
+      </div>
+      <div class="col-6 col-md-2">
+        <div class="stat-card text-center">
+          <div class="stat-value" style="font-size:1.5rem;color:var(--danger)">{{ stats.rejected }}</div>
+          <div class="stat-label">Rejected</div>
+        </div>
+      </div>
+      <div class="col-6 col-md-2">
+        <div class="stat-card text-center">
+          <div class="stat-value" style="font-size:1.5rem;color:var(--primary)">${{ stats.total_fees|floatformat:0 }}</div>
+          <div class="stat-label">Fees Earned</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card mb-4">
+      <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+        <span><i class="fas fa-percent me-2" style="color:var(--primary)"></i>Fee Settings</span>
+        <small style="color:var(--muted)">Changes apply only to new transactions. Historical transactions keep their saved fee snapshot.</small>
+      </div>
+      <div class="card-body">
+        <form method="post" action="{% url 'admin_fee_settings_update' %}" class="row g-3 align-items-end">
+          {% csrf_token %}
+          <div class="col-md-4">
+            <label class="form-label small" style="color:var(--muted)">{{ fee_settings_form.deposit_fee_percent.label }}</label>
+            {{ fee_settings_form.deposit_fee_percent }}
+          </div>
+          <div class="col-md-4">
+            <label class="form-label small" style="color:var(--muted)">{{ fee_settings_form.withdrawal_fee_percent.label }}</label>
+            {{ fee_settings_form.withdrawal_fee_percent }}
+          </div>
+          <div class="col-md-4 d-grid">
+            <button type="submit" class="btn btn-primary">Update Fees</button>
+          </div>
+        </form>
+        <div class="mt-3" style="color:var(--muted);font-size:0.82rem">
+          Current live values in this environment:
+          Deposit <span style="color:var(--warning)">{{ fee_settings.deposit_fee_percent }}%</span>,
+          Withdrawal <span style="color:var(--info)">{{ fee_settings.withdrawal_fee_percent }}%</span>.
+        </div>
+      </div>
+    </div>
+
+    <div class="card mb-4">
+      <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+        <span><i class="fas fa-funnel-dollar me-2" style="color:var(--primary)"></i>Payment Reconciliation Snapshot</span>
+        <small style="color:var(--muted)">Use reconcile when transaction and payment states drift apart</small>
+      </div>
+      <div class="card-body">
+        <div class="row g-3">
+          <div class="col-6 col-md-3">
+            <div class="stat-card text-center">
+              <div class="stat-value" style="font-size:1.3rem;color:var(--warning)">{{ payment_stats.awaiting }}</div>
+              <div class="stat-label">Awaiting</div>
+            </div>
+          </div>
+          <div class="col-6 col-md-3">
+            <div class="stat-card text-center">
+              <div class="stat-value" style="font-size:1.3rem;color:var(--info)">{{ payment_stats.received }}</div>
+              <div class="stat-label">Received</div>
+            </div>
+          </div>
+          <div class="col-6 col-md-3">
+            <div class="stat-card text-center">
+              <div class="stat-value" style="font-size:1.3rem;color:var(--success)">{{ payment_stats.confirmed }}</div>
+              <div class="stat-label">Confirmed</div>
+            </div>
+          </div>
+          <div class="col-6 col-md-3">
+            <div class="stat-card text-center">
+              <div class="stat-value" style="font-size:1.3rem;color:var(--danger)">{{ payment_stats.failed }}</div>
+              <div class="stat-label">Failed</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    {% if floats %}
+    <div class="card mb-4">
+      <div class="card-header"><i class="fas fa-wallet me-2" style="color:var(--primary)"></i>Liquidity Pools {% if simulation_mode %}(Simulated){% endif %}</div>
+      <div class="card-body">
+        <div class="row g-3">
+          {% for f in floats %}
+          <div class="col-md-4">
+            <div class="stat-card {% if f.is_low %}border-danger{% endif %}">
+              <div style="color:var(--muted);font-size:0.8rem">{{ f.name|upper }}</div>
+              <div class="stat-value" style="font-size:1.5rem;color:{% if f.is_low %}var(--danger){% else %}var(--success){% endif %}">
+                {{ f.currency }} {{ f.balance }}
+              </div>
+              {% if f.is_low %}<div style="color:var(--danger);font-size:0.78rem">Low balance warning</div>{% endif %}
+              <div style="color:var(--muted);font-size:0.75rem;margin-top:4px">{{ f.note }}</div>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+    {% endif %}
+
+    <div class="row g-4 mb-4">
+      <div class="col-lg-6">
+        <div class="card h-100">
+          <div class="card-header d-flex justify-content-between align-items-center">
+            <span><i class="fas fa-scroll me-2" style="color:var(--primary)"></i>Recent Float Ledger</span>
+            <small style="color:var(--muted)">Immutable balance movements</small>
+          </div>
+          <div class="card-body">
+            {% if recent_float_ledger %}
+            <div class="d-flex flex-column gap-3">
+              {% for entry in recent_float_ledger %}
+              <div class="step-box">
+                <div class="d-flex justify-content-between gap-3 flex-wrap">
+                  <div>
+                    <div style="font-weight:600">{{ entry.system_float.name }}</div>
+                    <div style="color:var(--muted);font-size:0.78rem">{{ entry.reason }}</div>
+                    <div style="color:var(--muted);font-size:0.75rem;margin-top:4px">
+                      {{ entry.created_at|date:"M d, H:i" }} by {{ entry.actor_label }}
+                      {% if entry.transaction %}<span class="ms-1">- {{ entry.transaction.reference_code }}</span>{% endif %}
+                    </div>
+                  </div>
+                  <div class="text-end">
+                    <div style="font-family:monospace;color:{% if entry.delta < 0 %}var(--danger){% else %}var(--success){% endif %}">
+                      {% if entry.delta > 0 %}+{% endif %}{{ entry.delta }}
+                    </div>
+                    <div style="color:var(--muted);font-size:0.78rem">
+                      {{ entry.balance_before }} -> {{ entry.balance_after }}
+                    </div>
+                  </div>
+                </div>
+              </div>
+              {% endfor %}
+            </div>
+            {% else %}
+            <div style="color:var(--muted)">No float ledger entries yet.</div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+
+      <div class="col-lg-6">
+        <div class="card h-100">
+          <div class="card-header d-flex justify-content-between align-items-center">
+            <span><i class="fas fa-file-signature me-2" style="color:var(--primary)"></i>Recent Fee Changes</span>
+            <small style="color:var(--muted)">Historical pricing changes</small>
+          </div>
+          <div class="card-body">
+            {% if recent_fee_changes %}
+            <div class="d-flex flex-column gap-3">
+              {% for change in recent_fee_changes %}
+              <div class="step-box">
+                <div style="font-weight:600">{{ change.changed_by_label }}</div>
+                <div style="color:var(--muted);font-size:0.78rem">
+                  Deposit {{ change.previous_deposit_fee_percent }}% -> {{ change.new_deposit_fee_percent }}%
+                </div>
+                <div style="color:var(--muted);font-size:0.78rem">
+                  Withdrawal {{ change.previous_withdrawal_fee_percent }}% -> {{ change.new_withdrawal_fee_percent }}%
+                </div>
+                <div style="color:var(--muted);font-size:0.75rem;margin-top:4px">
+                  {{ change.created_at|date:"M d, H:i" }} via {{ change.get_source_display }}
+                </div>
+                {% if change.note %}
+                <div style="color:var(--muted);font-size:0.78rem;margin-top:6px">{{ change.note }}</div>
+                {% endif %}
+              </div>
+              {% endfor %}
+            </div>
+            {% else %}
+            <div style="color:var(--muted)">No fee changes recorded yet.</div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+        <span><i class="fas fa-list-check me-2" style="color:var(--primary)"></i>Transaction Operations Queue</span>
+        <small style="color:var(--muted)">Approve processes funds, reject fails the request, retry re-runs a failed attempt, reconcile realigns status records.</small>
+      </div>
+      <div class="card-body border-bottom" style="border-color:var(--border) !important;">
+        <form method="get" class="row g-2 align-items-end">
+          <div class="col-md-4">
+            <label class="form-label small" style="color:var(--muted)">Search</label>
+            <input type="text" name="q" value="{{ search_query }}" class="form-control" placeholder="Reference, username, or email">
+          </div>
+          <div class="col-md-3">
+            <label class="form-label small" style="color:var(--muted)">Status</label>
+            <select name="status" class="form-select">
+              <option value="">All statuses</option>
+              <option value="pending" {% if status_filter == 'pending' %}selected{% endif %}>Pending</option>
+              <option value="processing" {% if status_filter == 'processing' %}selected{% endif %}>Processing</option>
+              <option value="completed" {% if status_filter == 'completed' %}selected{% endif %}>Completed</option>
+              <option value="rejected" {% if status_filter == 'rejected' %}selected{% endif %}>Rejected</option>
+            </select>
+          </div>
+          <div class="col-md-3">
+            <label class="form-label small" style="color:var(--muted)">Type</label>
+            <select name="type" class="form-select">
+              <option value="">All types</option>
+              <option value="deposit" {% if type_filter == 'deposit' %}selected{% endif %}>Deposit</option>
+              <option value="withdrawal" {% if type_filter == 'withdrawal' %}selected{% endif %}>Withdrawal</option>
+            </select>
+          </div>
+          <div class="col-md-2 d-grid">
+            <button type="submit" class="btn btn-primary">Filter</button>
+          </div>
+        </form>
+      </div>
+      {% if transactions %}
+      <div class="table-responsive">
+        <table class="table table-hover mb-0 align-middle">
+          <thead>
+            <tr style="color:var(--muted);font-size:0.78rem">
+              <th class="px-4 py-3">REFERENCE</th>
+              <th>USER</th>
+              <th>TYPE</th>
+              <th>AMOUNT</th>
+              <th>TX STATUS</th>
+              <th>PAYMENT</th>
+              <th>OPERATIONS</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for tx in transactions %}
+            <tr>
+              <td class="px-4 py-3">
+                <div class="ref-code">{{ tx.reference_code }}</div>
+                <div style="color:var(--muted);font-size:0.78rem">{{ tx.created_at|date:"M d, H:i" }}</div>
+              </td>
+              <td>
+                <div>{{ tx.user.full_name }}</div>
+                <div style="color:var(--muted);font-size:0.78rem">{{ tx.user.email|default:tx.user.username }}</div>
+              </td>
+              <td>
+                <div><span class="badge {% if tx.transaction_type == 'deposit' %}badge-completed{% else %}badge-processing{% endif %}">{{ tx.transaction_type|capfirst }}</span></div>
+                <div style="color:var(--muted);font-size:0.78rem;margin-top:6px">{{ tx.get_platform_display }}</div>
+              </td>
+              <td>
+                <div style="font-family:monospace">${{ tx.amount }}</div>
+                <div style="color:var(--primary);font-size:0.78rem">Fee ${{ tx.fee }}</div>
+              </td>
+              <td><span class="badge badge-{{ tx.status }}">{{ tx.get_status_display }}</span></td>
+              <td>
+                {% if tx.payment.status == 'confirmed' %}
+                <span class="badge badge-completed">Confirmed</span>
+                {% elif tx.payment.status == 'received' %}
+                <span class="badge badge-processing">Received</span>
+                {% elif tx.payment.status == 'failed' %}
+                <span class="badge badge-rejected">Failed</span>
+                {% else %}
+                <span class="badge badge-pending">Awaiting</span>
+                {% endif %}
+                <div style="color:var(--muted);font-size:0.78rem;margin-top:6px">{{ tx.get_payment_method_display }}</div>
+              </td>
+              <td style="min-width: 360px;">
+                <form method="post" action="{% url 'admin_transaction_action' tx.pk %}">
+                  {% csrf_token %}
+                  <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                  <input
+                    type="text"
+                    name="note"
+                    class="form-control form-control-sm mb-2"
+                    placeholder="Optional note or rejection reason"
+                  >
+                  <div class="d-flex flex-wrap gap-2">
+                    <button
+                      type="submit"
+                      name="action"
+                      value="approve"
+                      class="btn btn-sm btn-outline-primary"
+                      {% if tx.status != 'pending' %}disabled{% endif %}
+                    >
+                      Approve
+                    </button>
+                    <button
+                      type="submit"
+                      name="action"
+                      value="reject"
+                      class="btn btn-sm btn-outline-danger"
+                      {% if tx.status == 'completed' %}disabled{% endif %}
+                    >
+                      Reject
+                    </button>
+                    <button
+                      type="submit"
+                      name="action"
+                      value="retry"
+                      class="btn btn-sm btn-outline-warning"
+                      {% if tx.status != 'rejected' and tx.status != 'processing' %}disabled{% endif %}
+                    >
+                      Retry
+                    </button>
+                    <button
+                      type="submit"
+                      name="action"
+                      value="reconcile"
+                      class="btn btn-sm btn-outline-secondary"
+                    >
+                      Reconcile
+                    </button>
+                  </div>
+                </form>
+                {% if tx.rejection_reason %}
+                <div style="color:var(--danger);font-size:0.78rem;margin-top:8px">Reject reason: {{ tx.rejection_reason }}</div>
+                {% endif %}
+                {% if tx.admin_notes %}
+                <div style="color:var(--muted);font-size:0.78rem;margin-top:8px;white-space:pre-line">{{ tx.admin_notes|truncatechars:180 }}</div>
+                {% endif %}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="card-body text-center py-4" style="color:var(--muted)">No transactions match the current filters.</div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

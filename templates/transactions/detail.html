@@ -1,0 +1,200 @@
+{% extends 'base.html' %}
+{% block title %}{{ transaction.reference_code }} — TradeGate ZW{% endblock %}
+{% block content %}
+<div class="row py-4 px-2">
+  <div class="col-md-2 d-none d-md-block">
+    <nav class="nav flex-column pt-2">
+      <a class="nav-link" href="{% url 'dashboard' %}"><i class="fas fa-th-large me-2"></i>Dashboard</a>
+      <a class="nav-link" href="{% url 'transaction_list' %}"><i class="fas fa-history me-2"></i>History</a>
+    </nav>
+  </div>
+  <div class="col-md-10 main-content">
+    <div class="d-flex align-items-center gap-3 mb-4">
+      <a href="{% url 'transaction_list' %}" style="color:var(--muted)"><i class="fas fa-arrow-left"></i></a>
+      <h4 class="fw-bold mb-0">Transaction Details</h4>
+      <span class="badge badge-{{ transaction.status }} ms-auto">{{ transaction.get_status_display }}</span>
+    </div>
+
+    <div class="row g-4">
+      <div class="col-md-7">
+        <div class="card mb-4">
+          <div class="card-header">Transaction Info</div>
+          <div class="card-body p-0">
+            {% for label, value, style in details_rows %}
+            {% empty %}
+            {% endfor %}
+            <div class="px-4 py-3" style="border-bottom:1px solid var(--border)">
+              <div class="d-flex justify-content-between">
+                <span style="color:var(--muted)">Reference</span>
+                <span class="ref-code">{{ transaction.reference_code }}</span>
+              </div>
+            </div>
+            <div class="px-4 py-3" style="border-bottom:1px solid var(--border)">
+              <div class="d-flex justify-content-between">
+                <span style="color:var(--muted)">Type</span>
+                <span class="badge {% if transaction.transaction_type == 'deposit' %}badge-completed{% else %}badge-processing{% endif %}">
+                  {{ transaction.transaction_type|capfirst }}
+                </span>
+              </div>
+            </div>
+            <div class="px-4 py-3" style="border-bottom:1px solid var(--border)">
+              <div class="d-flex justify-content-between">
+                <span style="color:var(--muted)">Platform</span>
+                <span>{{ transaction.get_platform_display }}</span>
+              </div>
+            </div>
+            <div class="px-4 py-3" style="border-bottom:1px solid var(--border)">
+              <div class="d-flex justify-content-between">
+                <span style="color:var(--muted)">Amount Submitted</span>
+                <span style="font-family:monospace">${{ transaction.amount }}</span>
+              </div>
+            </div>
+            <div class="px-4 py-3" style="border-bottom:1px solid var(--border)">
+              <div class="d-flex justify-content-between">
+                <span style="color:var(--muted)">Fee ({{ transaction.fee_percent_applied|default_if_none:"0.00" }}%)</span>
+                <span style="font-family:monospace;color:var(--warning)">-${{ transaction.fee }}</span>
+              </div>
+            </div>
+            <div class="px-4 py-3" style="border-bottom:1px solid var(--border)">
+              <div class="d-flex justify-content-between">
+                <span style="color:var(--muted)">
+                  {% if transaction.transaction_type == 'deposit' %}
+                  Trading Account Credit
+                  {% else %}
+                  Payout After Fee
+                  {% endif %}
+                </span>
+                <span style="font-family:monospace;color:var(--success);font-weight:700">
+                  ${{ transaction.amount_after_fee }}{% if transaction.transaction_type == 'deposit' %} USDT{% endif %}
+                </span>
+              </div>
+            </div>
+            <div class="px-4 py-3" style="border-bottom:1px solid var(--border)">
+              <div class="d-flex justify-content-between">
+                <span style="color:var(--muted)">Payment Method</span>
+                <span>{{ transaction.get_payment_method_display }}</span>
+              </div>
+            </div>
+            <div class="px-4 py-3" style="border-bottom:1px solid var(--border)">
+              <div class="d-flex justify-content-between">
+                <span style="color:var(--muted)">Destination Account</span>
+                <span style="font-family:monospace;font-size:0.85rem">{{ transaction.destination_account }}</span>
+              </div>
+            </div>
+            <div class="px-4 py-3" style="border-bottom:1px solid var(--border)">
+              <div class="d-flex justify-content-between">
+                <span style="color:var(--muted)">Submitted At</span>
+                <span>{{ transaction.created_at|date:"M d, Y H:i" }}</span>
+              </div>
+            </div>
+            {% if transaction.completed_at %}
+            <div class="px-4 py-3">
+              <div class="d-flex justify-content-between">
+                <span style="color:var(--muted)">Completed At</span>
+                <span style="color:var(--success)">{{ transaction.completed_at|date:"M d, Y H:i" }}</span>
+              </div>
+            </div>
+            {% endif %}
+            {% if transaction.admin_notes %}
+            <div class="px-4 py-3" style="background:rgba(0,212,170,0.05)">
+              <div style="color:var(--muted);font-size:0.8rem">ADMIN NOTES</div>
+              <div style="font-size:0.9rem;margin-top:4px">{{ transaction.admin_notes }}</div>
+            </div>
+            {% endif %}
+            {% if transaction.rejection_reason %}
+            <div class="px-4 py-3" style="background:rgba(248,81,73,0.05)">
+              <div style="color:var(--danger);font-size:0.8rem">REJECTION REASON</div>
+              <div style="font-size:0.9rem;margin-top:4px">{{ transaction.rejection_reason }}</div>
+            </div>
+            {% endif %}
+          </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="d-flex gap-2 flex-wrap">
+          {% if transaction.status == 'pending' %}
+            {% if simulation_mode %}
+            <form method="post" action="{% url 'simulate_payment' transaction.pk %}">
+              {% csrf_token %}
+              <button type="submit" class="btn btn-primary">
+                <i class="fas fa-flask me-2"></i>
+                {% if transaction.transaction_type == 'deposit' %}
+                Simulate Payment (Test)
+                {% else %}
+                Simulate Payout (Test)
+                {% endif %}
+              </button>
+            </form>
+            {% endif %}
+            <form method="post" action="{% url 'cancel_transaction' transaction.pk %}">
+              {% csrf_token %}
+              <button type="submit" class="btn btn-outline-danger"
+                      onclick="return confirm('Cancel this transaction?')">
+                Cancel
+              </button>
+            </form>
+          {% endif %}
+          <a href="{% url 'transaction_list' %}" class="btn btn-outline-secondary">Back to History</a>
+        </div>
+      </div>
+
+      <div class="col-md-5">
+        <!-- Status Timeline -->
+        <div class="card mb-3">
+          <div class="card-header">Status Timeline</div>
+          <div class="card-body p-4">
+            {% for step, label in steps %}
+            <div class="d-flex gap-3 mb-3 align-items-start">
+              <div style="width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.7rem;font-weight:700;flex-shrink:0;
+                {% if step == transaction.status %}background:var(--primary);color:#000
+                {% elif step == 'completed' and transaction.status == 'completed' %}background:var(--success);color:#000
+                {% elif step == 'rejected' and transaction.status == 'rejected' %}background:var(--danger);color:#fff
+                {% else %}background:var(--border);color:var(--muted){% endif %}">
+                {% if step == transaction.status %}●{% else %}○{% endif %}
+              </div>
+              <div>
+                <div style="font-weight:{% if step == transaction.status %}600{% else %}400{% endif %}">{{ label }}</div>
+              </div>
+            </div>
+            {% empty %}
+            <div class="d-flex gap-3 mb-3 align-items-start">
+              <div style="width:24px;height:24px;border-radius:50%;background:{% if transaction.status == 'pending' %}var(--primary){% else %}var(--border){% endif %};display:flex;align-items:center;justify-content:center;font-size:0.7rem;color:#000;flex-shrink:0">●</div>
+              <div>Pending — Awaiting payment</div>
+            </div>
+            <div class="d-flex gap-3 mb-3 align-items-start">
+              <div style="width:24px;height:24px;border-radius:50%;background:{% if transaction.status == 'processing' %}var(--info){% else %}var(--border){% endif %};display:flex;align-items:center;justify-content:center;font-size:0.7rem;color:#000;flex-shrink:0">●</div>
+              <div>Processing — Payment confirmed</div>
+            </div>
+            <div class="d-flex gap-3 mb-3 align-items-start">
+              <div style="width:24px;height:24px;border-radius:50%;background:{% if transaction.status == 'completed' %}var(--success){% else %}var(--border){% endif %};display:flex;align-items:center;justify-content:center;font-size:0.7rem;color:#000;flex-shrink:0">●</div>
+              <div>Completed — Funds sent</div>
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+
+        {% if transaction.status == 'pending' %}
+        <div class="card">
+          <div class="card-header"><i class="fas fa-mobile-alt me-2" style="color:var(--primary)"></i>Payment Instructions</div>
+          <div class="card-body p-3">
+            {% if transaction.get_payment_method_display == 'EcoCash' %}
+            <p style="color:var(--muted);font-size:0.88rem">Send <strong style="color:var(--text)">${{ transaction.amount }}</strong> via EcoCash to:</p>
+            <div style="font-family:monospace;font-size:1.1rem;color:var(--primary);margin-bottom:1rem">{{ ecocash_number }}</div>
+            <p style="color:var(--muted);font-size:0.82rem">Use reference: <span class="ref-code">{{ transaction.reference_code }}</span></p>
+            {% else %}
+            <p style="color:var(--muted);font-size:0.88rem">Transfer <strong style="color:var(--text)">${{ transaction.amount }}</strong> to:</p>
+            <div style="font-size:0.9rem">Bank: <strong>CBZ Bank</strong><br>Account: <span class="ref-code">0000000000</span></div>
+            {% endif %}
+            {% if simulation_mode %}
+            <div class="alert-sim p-2 mt-3" style="border-radius:8px;font-size:0.78rem">
+              <i class="fas fa-flask me-1"></i> Skip payment — click <strong>Simulate Payment</strong> above to test
+            </div>
+            {% endif %}
+          </div>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

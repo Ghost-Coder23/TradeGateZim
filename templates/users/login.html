@@ -1,0 +1,37 @@
+{% extends 'base.html' %}
+{% block title %}Login — TradeGate ZW{% endblock %}
+{% block content %}
+<div class="row justify-content-center align-items-center" style="min-height:85vh">
+  <div class="col-md-5 col-lg-4">
+    <div class="text-center mb-4">
+      <div style="font-size:2.5rem">🌍</div>
+      <h1 style="font-size:2rem;font-weight:700;color:var(--primary)">TradeGate <span style="color:var(--text)">ZW</span></h1>
+      <p style="color:var(--muted)">Zimbabwe's forex payment bridge</p>
+    </div>
+    <div class="card">
+      <div class="card-body p-4">
+        <h4 class="mb-4 fw-bold">Sign In</h4>
+        <form method="post">
+          {% csrf_token %}
+          <div class="mb-3">
+            <label class="form-label" style="color:var(--muted);font-size:0.82rem;letter-spacing:0.05em">USERNAME</label>
+            <input type="text" name="username" class="form-control" required autofocus>
+          </div>
+          <div class="mb-4">
+            <label class="form-label" style="color:var(--muted);font-size:0.82rem;letter-spacing:0.05em">PASSWORD</label>
+            <input type="password" name="password" class="form-control" required>
+          </div>
+          <button type="submit" class="btn btn-primary w-100 py-2 fw-bold">Sign In</button>
+        </form>
+        <hr style="border-color:var(--border);margin:1.5rem 0">
+        <p class="text-center mb-0" style="color:var(--muted)">
+          No account? <a href="{% url 'register' %}" style="color:var(--primary);font-weight:600">Register here</a>
+        </p>
+      </div>
+    </div>
+    <div class="alert-sim p-3 mt-3 text-center" style="font-size:0.82rem;border-radius:10px">
+      <i class="fas fa-flask me-1"></i> Simulation mode active — create any account to explore
+    </div>
+  </div>
+</div>
+{% endblock %}

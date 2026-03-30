@@ -1,0 +1,72 @@
+{% extends 'base.html' %}
+{% block title %}Register — TradeGate ZW{% endblock %}
+{% block content %}
+<div class="row justify-content-center py-5">
+  <div class="col-md-7 col-lg-6">
+    <div class="text-center mb-4">
+      <h2 class="fw-bold">Create Your Account</h2>
+      <p style="color:var(--muted)">Start funding your trading accounts locally</p>
+    </div>
+    <div class="card">
+      <div class="card-body p-4">
+        <form method="post">
+          {% csrf_token %}
+          <div class="row g-3">
+            <div class="col-6">
+              <label class="form-label" style="color:var(--muted);font-size:0.82rem">FIRST NAME</label>
+              <input type="text" name="first_name" class="form-control" required>
+            </div>
+            <div class="col-6">
+              <label class="form-label" style="color:var(--muted);font-size:0.82rem">LAST NAME</label>
+              <input type="text" name="last_name" class="form-control" required>
+            </div>
+            <div class="col-12">
+              <label class="form-label" style="color:var(--muted);font-size:0.82rem">EMAIL ADDRESS</label>
+              <input type="email" name="email" class="form-control" required>
+            </div>
+            <div class="col-6">
+              <label class="form-label" style="color:var(--muted);font-size:0.82rem">PHONE (ECOCASH)</label>
+              <input type="text" name="phone" class="form-control" placeholder="+263771234567">
+            </div>
+            <div class="col-6">
+              <label class="form-label" style="color:var(--muted);font-size:0.82rem">COUNTRY</label>
+              <select name="country" class="form-select">
+                <option value="ZW" selected>Zimbabwe</option>
+                <option value="ZA">South Africa</option>
+                <option value="ZM">Zambia</option>
+                <option value="BW">Botswana</option>
+                <option value="OTHER">Other</option>
+              </select>
+            </div>
+            <div class="col-12">
+              <label class="form-label" style="color:var(--muted);font-size:0.82rem">USERNAME</label>
+              <input type="text" name="username" class="form-control" required>
+            </div>
+            <div class="col-6">
+              <label class="form-label" style="color:var(--muted);font-size:0.82rem">PASSWORD</label>
+              <input type="password" name="password1" class="form-control" required>
+            </div>
+            <div class="col-6">
+              <label class="form-label" style="color:var(--muted);font-size:0.82rem">CONFIRM PASSWORD</label>
+              <input type="password" name="password2" class="form-control" required>
+            </div>
+            {% if form.errors %}
+            <div class="col-12">
+              <div class="alert-sim p-3" style="border-radius:8px;font-size:0.85rem">
+                {% for field, errors in form.errors.items %}{% for error in errors %}<div>⚠ {{ error }}</div>{% endfor %}{% endfor %}
+              </div>
+            </div>
+            {% endif %}
+            <div class="col-12 mt-2">
+              <button type="submit" class="btn btn-primary w-100 py-2 fw-bold">Create Account</button>
+            </div>
+          </div>
+        </form>
+        <p class="text-center mt-3 mb-0" style="color:var(--muted)">
+          Already have an account? <a href="{% url 'login' %}" style="color:var(--primary);font-weight:600">Sign in</a>
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

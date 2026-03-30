@@ -1,0 +1,167 @@
+{% extends 'base.html' %}
+{% block title %}Dashboard — TradeGate ZW{% endblock %}
+{% block content %}
+<div class="row py-4 px-2">
+  <div class="col-md-2 d-none d-md-block">
+    <nav class="nav flex-column pt-2">
+      <a class="nav-link active" href="{% url 'dashboard' %}"><i class="fas fa-th-large me-2"></i>Dashboard</a>
+      <a class="nav-link" href="{% url 'deposit' %}"><i class="fas fa-arrow-circle-down me-2"></i>Deposit</a>
+      <a class="nav-link" href="{% url 'withdrawal' %}"><i class="fas fa-arrow-circle-up me-2"></i>Withdraw</a>
+      <a class="nav-link" href="{% url 'transaction_list' %}"><i class="fas fa-history me-2"></i>History</a>
+      <a class="nav-link" href="{% url 'rates' %}"><i class="fas fa-chart-line me-2"></i>Rates</a>
+      <a class="nav-link" href="{% url 'profile' %}"><i class="fas fa-user me-2"></i>Profile</a>
+      {% if user.is_staff %}
+      <hr style="border-color:var(--border)">
+      <a class="nav-link" style="color:var(--primary)!important" href="{% url 'admin_panel' %}"><i class="fas fa-shield-alt me-2"></i>Admin Panel</a>
+      {% endif %}
+    </nav>
+  </div>
+
+  <div class="col-md-10 main-content">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <div>
+        <h4 class="mb-0 fw-bold">Welcome back, {{ user.first_name }} 👋</h4>
+        <small style="color:var(--muted)">Your trading gateway overview</small>
+      </div>
+      <div class="d-flex gap-2">
+        <a href="{% url 'deposit' %}" class="btn btn-primary btn-sm"><i class="fas fa-plus me-1"></i>Deposit</a>
+        <a href="{% url 'withdrawal' %}" class="btn btn-outline-primary btn-sm"><i class="fas fa-minus me-1"></i>Withdraw</a>
+      </div>
+    </div>
+
+    <div class="alert-sim p-3 mb-4 d-flex align-items-center gap-3" style="border-radius:10px">
+      <i class="fas fa-flask fa-lg"></i>
+      <div>
+        <strong>Simulation Mode Active</strong> — No real money moves.
+        Submit a transaction then click <strong>Simulate Payment</strong> to test the full automated flow.
+      </div>
+    </div>
+
+    <!-- Stats Row -->
+    <div class="row g-3 mb-4">
+      <div class="col-6 col-md-3">
+        <div class="stat-card">
+          <div class="stat-value">{{ stats.total }}</div>
+          <div class="stat-label"><i class="fas fa-exchange-alt me-1"></i>Total Transactions</div>
+        </div>
+      </div>
+      <div class="col-6 col-md-3">
+        <div class="stat-card">
+          <div class="stat-value" style="color:var(--warning)">{{ stats.pending }}</div>
+          <div class="stat-label"><i class="fas fa-clock me-1"></i>Pending</div>
+        </div>
+      </div>
+      <div class="col-6 col-md-3">
+        <div class="stat-card">
+          <div class="stat-value" style="color:var(--success)">${{ stats.total_deposited|floatformat:2 }}</div>
+          <div class="stat-label"><i class="fas fa-arrow-down me-1"></i>Deposited</div>
+        </div>
+      </div>
+      <div class="col-6 col-md-3">
+        <div class="stat-card">
+          <div class="stat-value" style="color:var(--info)">${{ stats.total_withdrawn|floatformat:2 }}</div>
+          <div class="stat-label"><i class="fas fa-arrow-up me-1"></i>Withdrawn</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Rates -->
+    <div class="card mb-4">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <span><i class="fas fa-chart-line me-2" style="color:var(--primary)"></i>Current Exchange Rates</span>
+        {% if rates.simulated %}<span style="color:var(--warning);font-size:0.75rem;font-family:monospace">⚡ SIMULATED</span>{% endif %}
+      </div>
+      <div class="card-body">
+        <div class="row g-3 text-center">
+          <div class="col-6 col-md-3">
+            <div style="color:var(--muted);font-size:0.8rem;margin-bottom:6px">MARKET RATE</div>
+            <div style="font-family:monospace;font-size:1.3rem;color:var(--text)">{{ rates.usdt_rate }}</div>
+            <div style="color:var(--muted);font-size:0.75rem">USD/USDT</div>
+          </div>
+          <div class="col-6 col-md-3">
+            <div style="color:var(--muted);font-size:0.8rem;margin-bottom:6px">DEPOSIT FEE</div>
+            <div style="font-family:monospace;font-size:1.3rem;color:var(--warning)">{{ rates.deposit_fee_percent }}%</div>
+            <div style="color:var(--muted);font-size:0.75rem">charged on deposits</div>
+          </div>
+          <div class="col-6 col-md-3">
+            <div style="color:var(--muted);font-size:0.8rem;margin-bottom:6px">DEPOSIT NET RATE</div>
+            <div style="font-family:monospace;font-size:1.3rem;color:var(--success)">{{ rates.deposit_effective_rate }}</div>
+            <div style="color:var(--muted);font-size:0.75rem">USDT per $1</div>
+          </div>
+          <div class="col-6 col-md-3">
+            <div style="color:var(--muted);font-size:0.8rem;margin-bottom:6px">WITHDRAWAL FEE</div>
+            <div style="font-family:monospace;font-size:1.3rem;color:var(--info)">{{ rates.withdrawal_fee_percent }}%</div>
+            <div style="color:var(--muted);font-size:0.75rem">charged on withdrawals</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="row g-3 mb-4">
+      <div class="col-md-6">
+        <div class="card h-100" style="border-color:rgba(0,212,170,0.3);cursor:pointer" onclick="location.href='{% url 'deposit' %}'">
+          <div class="card-body p-4 text-center">
+            <i class="fas fa-arrow-circle-down fa-2x mb-3" style="color:var(--primary)"></i>
+            <h5 class="fw-bold">Fund Trading Account</h5>
+            <p style="color:var(--muted);font-size:0.88rem">Pay via EcoCash or bank. Receive USDT on Binance or your broker instantly.</p>
+            <a href="{% url 'deposit' %}" class="btn btn-primary">Start Deposit →</a>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="card h-100" style="border-color:rgba(88,166,255,0.3);cursor:pointer" onclick="location.href='{% url 'withdrawal' %}'">
+          <div class="card-body p-4 text-center">
+            <i class="fas fa-arrow-circle-up fa-2x mb-3" style="color:var(--info)"></i>
+            <h5 class="fw-bold">Withdraw Profits</h5>
+            <p style="color:var(--muted);font-size:0.88rem">Send crypto from broker. Receive cash via EcoCash or bank transfer.</p>
+            <a href="{% url 'withdrawal' %}" class="btn btn-outline-primary">Start Withdrawal →</a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Recent Transactions -->
+    <div class="card">
+      <div class="card-header d-flex justify-content-between">
+        <span><i class="fas fa-history me-2" style="color:var(--primary)"></i>Recent Transactions</span>
+        <a href="{% url 'transaction_list' %}" style="color:var(--primary);font-size:0.85rem">View all →</a>
+      </div>
+      {% if recent_transactions %}
+      <div class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead><tr style="color:var(--muted);font-size:0.8rem">
+            <th class="px-4 py-3">REFERENCE</th>
+            <th>TYPE</th>
+            <th>PLATFORM</th>
+            <th>AMOUNT</th>
+            <th>STATUS</th>
+            <th>DATE</th>
+          </tr></thead>
+          <tbody>
+            {% for tx in recent_transactions %}
+            <tr onclick="location.href='{% url 'transaction_detail' tx.pk %}'" style="cursor:pointer">
+              <td class="px-4 py-3"><span class="ref-code">{{ tx.reference_code }}</span></td>
+              <td><span class="badge {% if tx.transaction_type == 'deposit' %}badge-completed{% else %}badge-processing{% endif %}">
+                {{ tx.transaction_type|capfirst }}
+              </span></td>
+              <td>{{ tx.get_platform_display }}</td>
+              <td style="font-family:monospace">${{ tx.amount }}</td>
+              <td><span class="badge badge-{{ tx.status }}">{{ tx.get_status_display }}</span></td>
+              <td style="color:var(--muted);font-size:0.85rem">{{ tx.created_at|date:"M d, H:i" }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="card-body text-center py-5">
+        <i class="fas fa-inbox fa-3x mb-3" style="color:var(--border)"></i>
+        <p style="color:var(--muted)">No transactions yet.</p>
+        <a href="{% url 'deposit' %}" class="btn btn-primary btn-sm">Make your first deposit</a>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}
