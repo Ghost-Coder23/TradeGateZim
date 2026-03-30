@@ -61,7 +61,7 @@ forex_gateway/          # Main Django project
 
 **Key Features:**
 - Real-time rate fetching (sim)
-- 3% configurable fees (deposits/withdrawals)
+- The admin can set the withdrawal and deposit fees
 - Balance tracking + audit logs
 - Responsive design (mobile-first)
 - Staff admin dashboard
