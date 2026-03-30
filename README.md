@@ -1,10 +1,10 @@
 # TradeGate Zim 🇿🇼 - Forex Trading Gateway for Zimbabwe
 
-**Hey there! 👋 I'm building TradeGate Zim to solve Zimbabwe's forex nightmare.** 
+Hey there! I'm building TradeGate Zim to solve Zimbabwe's forex nightmare. 
 
-Multi-currency RTGS/USDC/ZWL madness? EcoCash delays? Black market rates? **This platform makes forex simple** - deposit local currency, get USDT for Binance trading. Clean dashboard, real-time rates, automated tracking.
+Multi-currency RTGS/USDC/ZWL madness? EcoCash delays? Black market rates? This platform makes forex simple - deposit local currency, get USDT for Binance trading. Clean dashboard, real-time rates, automated tracking.
 
-## 🚀 Quick Start (Development)
+## Quick Start (Development)
 
 ```bash
 pip install django python-decimal
@@ -14,7 +14,7 @@ python manage.py seed_data  # Creates test users
 python manage.py runserver
 ```
 
-**Open:** http://127.0.0.1:8000
+Open: http://127.0.0.1:8000
 
 ### Test Accounts:
 ```
@@ -22,7 +22,7 @@ Super Admin: admin / admin123 (@admin-panel)
 Trader: trader1 / trader123
 ```
 
-## 📱 What Users See
+## What Users See
 
 | Feature | URL | Description |
 |---------|-----|-------------|
@@ -34,20 +34,20 @@ Trader: trader1 / trader123
 | Rates | `/rates/` | Live USD/USDT/ZWG |
 | Admin | `/admin-panel/` | Staff tools |
 
-## ⚠️ **SIMULATION MODE ACTIVE** 
+## SIMULATION MODE ACTIVE 
 
-**THIS IS DEMO ONLY** - All payments \"received instantly\" via **Simulate Payment** button. No real money moves.
+THIS IS DEMO ONLY - All payments \"received instantly\" via Simulate Payment button. No real money moves.
 
 **Going Live Requirements (My TODO):**
-- ✅ Backend complete (Django + PostgreSQL ready)
-- ⏳ Binance API merchant account
-- ⏳ EcoCash merchant integration 
-- ⏳ SSL + payment gateway certs
-- ⏳ Load testing + Celery automation
+- Backend complete (Django + PostgreSQL ready)
+- Binance API merchant account
+- EcoCash merchant integration 
+- SSL + payment gateway certs
+- Load testing + Celery automation
 
-**Current Status:** Production-ready code, **simulation transactions only**. Live launch when APIs approved.
+**Current Status:** Production-ready code, simulation transactions only. Live launch when APIs approved.
 
-## 🔧 Architecture 
+## Architecture 
 
 ```
 forex_gateway/          # Main Django project
@@ -60,13 +60,13 @@ forex_gateway/          # Main Django project
 ```
 
 **Key Features:**
-- ✅ Real-time rate fetching (sim)
-- ✅ 3% configurable fees (deposits/withdrawals)
-- ✅ Balance tracking + audit logs
-- ✅ Responsive design (mobile-first)
-- ✅ Staff admin dashboard
+- Real-time rate fetching (sim)
+- 3% configurable fees (deposits/withdrawals)
+- Balance tracking + audit logs
+- Responsive design (mobile-first)
+- Staff admin dashboard
 
-## 💰 Revenue Model
+## Revenue Model
 ```
 User: EcoCash 100 ZWG ($10)
 ↓ 3% fee
@@ -74,29 +74,29 @@ Platform: $0.30
 User receives: 9.7 USDT
 ```
 
-## 🚀 Production Deployment (My Next Steps)
+## Production Deployment (My Next Steps)
 
-1. **Database:** PostgreSQL + Redis
-2. **APIs:** 
+1. Database: PostgreSQL + Redis
+2. APIs: 
    ```python
    # settings.py - uncomment when ready
    SIMULATION_MODE = False
    BINANCE_API_KEY = env('BINANCE_KEY')
    ECOCASH_MERCHANT_CODE = env('ECOCASH_CODE')
    ```
-3. **Deploy:** Railway/Heroku/DigitalOcean
-4. **Background:** Celery for rate sync + notifications
+3. Deploy: Railway/Heroku/DigitalOcean
+4. Background: Celery for rate sync + notifications
 
-## 🤝 Contributing
+## Contributing
 ```
 # Development
 pip install -r requirements.txt  # Coming soon
 python manage.py test
 ```
 
-**Issues?** Open one. **Zim fintech ideas?** DM me!
+Issues? Open one. Zim fintech ideas? DM me!
 
-**Live demo when APIs approved. 🇿🇼⚡️**
+Live demo when APIs approved. 🇿🇼
 
-⭐ **Star if this helps Zim traders!**
+Star if this helps Zim traders!
 
