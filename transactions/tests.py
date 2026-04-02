@@ -1,3 +1,5 @@
+import json
+
 from django.core.cache import cache
 from django.test import TestCase
 from django.test.utils import override_settings
@@ -6,7 +8,7 @@ from django.contrib.auth import get_user_model
 from decimal import Decimal
 
 from payments.models import FeeSettings, FloatLedgerEntry, Payment, SystemFloat
-from .models import Transaction
+from .models import ProviderWebhookEvent, Transaction
 from .services import (
     LiveBinanceProvider,
     LiveEcoCashProvider,
@@ -236,6 +238,35 @@ class TransactionRouteTests(TestCase):
         second_response = self.client.post(reverse('simulate_payment', args=[second_transaction.pk]))
         self.assertEqual(second_response.status_code, 429)
 
+    def test_binance_webhook_capture_links_transaction(self):
+        payload = {
+            'type': 'withdrawal.completed',
+            'reference_code': self.transaction.reference_code,
+            'event_id': 'binance-event-1',
+        }
+
+        response = self.client.post(
+            reverse('binance_webhook'),
+            data=json.dumps(payload),
+            content_type='application/json',
+            HTTP_X_BINANCE_SIGNATURE='demo-signature',
+        )
+
+        self.assertEqual(response.status_code, 202)
+        event = ProviderWebhookEvent.objects.get(provider='binance')
+        self.assertEqual(event.transaction, self.transaction)
+        self.assertEqual(event.processing_status, 'linked')
+        self.assertEqual(event.signature_status, 'not_configured')
+        self.assertEqual(event.external_event_id, 'binance-event-1')
+
+    def test_ecocash_webhook_rejects_invalid_json(self):
+        response = self.client.post(
+            reverse('ecocash_webhook'),
+            data='not-json',
+            content_type='application/json',
+        )
+        self.assertEqual(response.status_code, 400)
+
 
 class TransactionProcessorTests(TestCase):
     def setUp(self):
@@ -376,6 +407,39 @@ class TransactionProcessorTests(TestCase):
         self.assertEqual(entries[0].actor_label, 'processor_user')
         self.assertEqual(entries[1].system_float.name, 'USDT Pool (Binance)')
         self.assertEqual(entries[1].delta, Decimal('-14.55'))
+
+    def test_processing_records_provider_metadata(self):
+        deposit = Transaction.objects.create(
+            user=self.user,
+            transaction_type='deposit',
+            platform='binance',
+            amount=Decimal('20.00'),
+            payment_method='ecocash',
+            destination_account='wallet-provider-meta',
+        )
+        Payment.objects.create(
+            transaction=deposit,
+            payer_number='+263771234579',
+            amount=Decimal('20.00'),
+        )
+
+        result = self.processor.process_transaction(deposit)
+
+        deposit.refresh_from_db()
+        self.assertTrue(result['success'])
+        self.assertEqual(deposit.provider_status, 'completed')
+        self.assertTrue(deposit.provider_reference.startswith('SIM_'))
+        self.assertTrue(deposit.provider_payload.get('simulated'))
+        self.assertIsNotNone(deposit.provider_last_synced_at)
+
+    @override_settings(SIMULATION_MODE=False)
+    def test_live_provider_configuration_summary_reports_missing_settings(self):
+        processor = TransactionProcessor()
+
+        summary = processor.exchange_provider.configuration_summary()
+
+        self.assertFalse(summary['configured'])
+        self.assertIn('BINANCE_API_KEY', summary['missing_settings'])
 
     def test_insufficient_liquidity_rolls_back_partial_float_changes(self):
         usdt_pool = SystemFloat.objects.get(name='USDT Pool (Binance)')

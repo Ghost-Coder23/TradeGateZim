@@ -8,9 +8,12 @@ The important split here is:
 That lets simulation mode and future live providers share the same contract.
 """
 
+from dataclasses import dataclass
+from datetime import date, datetime
 import random
 import time
 from decimal import Decimal
+from typing import Any
 
 from django.conf import settings
 from django.db import IntegrityError, transaction as db_transaction
@@ -23,6 +26,100 @@ class ProviderConfigurationError(RuntimeError):
 
 class InsufficientFloatError(RuntimeError):
     """Raised when a float pool does not have enough liquidity for a movement."""
+
+
+def _json_ready(value: Any):
+    if isinstance(value, Decimal):
+        return str(value)
+    if isinstance(value, (datetime, date)):
+        return value.isoformat()
+    if isinstance(value, dict):
+        return {str(key): _json_ready(item) for key, item in value.items()}
+    if isinstance(value, (list, tuple, set)):
+        return [_json_ready(item) for item in value]
+    return value
+
+
+def _header_lookup(headers, *names):
+    if not headers:
+        return ''
+
+    lowered = {str(key).lower(): value for key, value in headers.items()}
+    for name in names:
+        value = lowered.get(name.lower())
+        if value:
+            return str(value)
+    return ''
+
+
+@dataclass(frozen=True)
+class BinanceProviderConfig:
+    api_key: str
+    secret_key: str
+    testnet: bool
+    webhook_secret: str = ''
+    transfer_asset: str = 'USDT'
+    transfer_network: str = 'TRX'
+    timeout_seconds: int = 15
+
+    @classmethod
+    def from_settings(cls):
+        return cls(
+            api_key=getattr(settings, 'BINANCE_API_KEY', ''),
+            secret_key=getattr(settings, 'BINANCE_SECRET_KEY', ''),
+            testnet=getattr(settings, 'BINANCE_TESTNET', True),
+            webhook_secret=getattr(settings, 'BINANCE_WEBHOOK_SECRET', ''),
+            transfer_asset=getattr(settings, 'BINANCE_TRANSFER_ASSET', 'USDT'),
+            transfer_network=getattr(settings, 'BINANCE_TRANSFER_NETWORK', 'TRX'),
+            timeout_seconds=int(getattr(settings, 'BINANCE_API_TIMEOUT_SECONDS', 15)),
+        )
+
+    @property
+    def missing_settings(self):
+        missing = []
+        if not self.api_key or self.api_key == 'SIMULATED_KEY':
+            missing.append('BINANCE_API_KEY')
+        if not self.secret_key or self.secret_key == 'SIMULATED_SECRET':
+            missing.append('BINANCE_SECRET_KEY')
+        return missing
+
+    @property
+    def configured(self):
+        return not self.missing_settings
+
+
+@dataclass(frozen=True)
+class EcoCashProviderConfig:
+    merchant_code: str
+    merchant_pin: str
+    api_url: str
+    webhook_secret: str = ''
+    timeout_seconds: int = 15
+
+    @classmethod
+    def from_settings(cls):
+        return cls(
+            merchant_code=getattr(settings, 'ECOCASH_MERCHANT_CODE', ''),
+            merchant_pin=getattr(settings, 'ECOCASH_MERCHANT_PIN', ''),
+            api_url=getattr(settings, 'ECOCASH_API_URL', ''),
+            webhook_secret=getattr(settings, 'ECOCASH_WEBHOOK_SECRET', ''),
+            timeout_seconds=int(getattr(settings, 'ECOCASH_API_TIMEOUT_SECONDS', 15)),
+        )
+
+    @property
+    def missing_settings(self):
+        missing = []
+        if not self.merchant_code or self.merchant_code == 'SIMULATED':
+            missing.append('ECOCASH_MERCHANT_CODE')
+        if not self.merchant_pin or self.merchant_pin == 'SIMULATED':
+            missing.append('ECOCASH_MERCHANT_PIN')
+        if not self.api_url:
+            missing.append('ECOCASH_API_URL')
+        return missing
+
+    @property
+    def configured(self):
+        return not self.missing_settings
 
 
 class BaseExchangeProvider:
@@ -40,6 +137,27 @@ class BaseExchangeProvider:
 
     def check_incoming_payment(self, address, expected_amount):
         raise NotImplementedError
+
+    def configuration_summary(self):
+        return {
+            'configured': True,
+            'missing_settings': [],
+            'simulated': self.simulated,
+        }
+
+    def inspect_webhook(self, headers=None, body=b''):
+        signature = _header_lookup(headers or {}, 'x-provider-signature', 'x-signature')
+        if signature:
+            return {
+                'signature': signature,
+                'signature_status': 'not_configured',
+                'note': 'Provider-specific webhook verification is not implemented yet.',
+            }
+        return {
+            'signature': '',
+            'signature_status': 'missing',
+            'note': 'No webhook signature header was provided.',
+        }
 
 
 class SimulationBinanceProvider(BaseExchangeProvider):
@@ -79,23 +197,69 @@ class LiveBinanceProvider(BaseExchangeProvider):
     provider_name = 'binance'
     simulated = False
 
-    def _not_configured(self, capability):
+    def __init__(self, config=None):
+        self.config = config or BinanceProviderConfig.from_settings()
+
+    def configuration_summary(self):
+        return {
+            'configured': self.config.configured,
+            'missing_settings': self.config.missing_settings,
+            'simulated': self.simulated,
+            'testnet': self.config.testnet,
+            'asset': self.config.transfer_asset,
+            'network': self.config.transfer_network,
+        }
+
+    def _ensure_configured(self, capability):
+        missing = self.config.missing_settings
+        if missing:
+            raise ProviderConfigurationError(
+                f"Live Binance provider cannot {capability}. Missing settings: {', '.join(missing)}."
+            )
+
+    def _not_implemented(self, capability):
+        self._ensure_configured(capability)
         raise ProviderConfigurationError(
-            f"Live Binance provider cannot {capability} yet. "
-            "Replace the provider stub in transactions/services.py with real Binance API calls."
+            f"Live Binance provider is configured but cannot {capability} yet. "
+            "Replace the provider scaffold in transactions/services.py with real Binance API calls."
         )
 
     def get_usdt_balance(self):
-        self._not_configured('fetch balances')
+        self._not_implemented('fetch balances')
 
     def send_usdt(self, address, amount, transaction_ref):
-        self._not_configured('send USDT')
+        self._not_implemented('send USDT')
 
     def get_current_rate(self, pair='USDTUSDT'):
-        self._not_configured('fetch exchange rates')
+        self._not_implemented('fetch exchange rates')
 
     def check_incoming_payment(self, address, expected_amount):
-        self._not_configured('check incoming payments')
+        self._not_implemented('check incoming payments')
+
+    def inspect_webhook(self, headers=None, body=b''):
+        signature = _header_lookup(
+            headers or {},
+            'x-binance-signature',
+            'x-provider-signature',
+            'x-signature',
+        )
+        if not signature:
+            return {
+                'signature': '',
+                'signature_status': 'missing',
+                'note': 'No Binance signature header was provided.',
+            }
+        if not self.config.webhook_secret:
+            return {
+                'signature': signature,
+                'signature_status': 'not_configured',
+                'note': 'Binance webhook secret is not configured yet.',
+            }
+        return {
+            'signature': signature,
+            'signature_status': 'not_configured',
+            'note': 'Binance webhook verification hook is ready, but the provider-specific algorithm still needs implementation.',
+        }
 
 
 class BasePayoutProvider:
@@ -138,17 +302,61 @@ class LiveEcoCashProvider(BasePayoutProvider):
     provider_name = 'ecocash'
     simulated = False
 
-    def _not_configured(self, capability):
+    def __init__(self, config=None):
+        self.config = config or EcoCashProviderConfig.from_settings()
+
+    def configuration_summary(self):
+        return {
+            'configured': self.config.configured,
+            'missing_settings': self.config.missing_settings,
+            'simulated': self.simulated,
+            'api_url': self.config.api_url,
+        }
+
+    def _ensure_configured(self, capability):
+        missing = self.config.missing_settings
+        if missing:
+            raise ProviderConfigurationError(
+                f"Live EcoCash provider cannot {capability}. Missing settings: {', '.join(missing)}."
+            )
+
+    def _not_implemented(self, capability):
+        self._ensure_configured(capability)
         raise ProviderConfigurationError(
-            f"Live EcoCash provider cannot {capability} yet. "
-            "Replace the provider stub in transactions/services.py with real EcoCash API calls."
+            f"Live EcoCash provider is configured but cannot {capability} yet. "
+            "Replace the provider scaffold in transactions/services.py with real EcoCash API calls."
         )
 
     def verify_payment(self, phone_number, amount, reference):
-        self._not_configured('verify payments')
+        self._not_implemented('verify payments')
 
     def send_payment(self, phone_number, amount, reference, reason):
-        self._not_configured('send payouts')
+        self._not_implemented('send payouts')
+
+    def inspect_webhook(self, headers=None, body=b''):
+        signature = _header_lookup(
+            headers or {},
+            'x-ecocash-signature',
+            'x-provider-signature',
+            'x-signature',
+        )
+        if not signature:
+            return {
+                'signature': '',
+                'signature_status': 'missing',
+                'note': 'No EcoCash signature header was provided.',
+            }
+        if not self.config.webhook_secret:
+            return {
+                'signature': signature,
+                'signature_status': 'not_configured',
+                'note': 'EcoCash webhook secret is not configured yet.',
+            }
+        return {
+            'signature': signature,
+            'signature_status': 'not_configured',
+            'note': 'EcoCash webhook verification hook is ready, but the provider-specific algorithm still needs implementation.',
+        }
 
 
 def get_exchange_provider():
@@ -160,6 +368,14 @@ def get_exchange_provider():
 def get_payout_provider():
     if settings.SIMULATION_MODE:
         return SimulationEcoCashProvider()
+    return LiveEcoCashProvider()
+
+
+def get_live_exchange_provider():
+    return LiveBinanceProvider()
+
+
+def get_live_payout_provider():
     return LiveEcoCashProvider()
 
 
@@ -207,7 +423,20 @@ class TransactionProcessor:
         existing = (transaction.admin_notes or '').strip()
         transaction.admin_notes = f"{existing}\n{entry}" if existing else entry
 
-    def _update_payment_status(self, payment, *, status=None, confirmed=None, confirmed_at=None):
+    def _update_payment_status(
+        self,
+        payment,
+        *,
+        status=None,
+        confirmed=None,
+        confirmed_at=None,
+        provider_status=None,
+        provider_reference=None,
+        provider_message=None,
+        provider_payload=None,
+        received_amount=None,
+        last_verified_at=None,
+    ):
         if not payment:
             return
 
@@ -216,7 +445,137 @@ class TransactionProcessor:
         if confirmed is not None:
             payment.confirmed = confirmed
         payment.confirmed_at = confirmed_at
+        if provider_status is not None:
+            payment.provider_status = provider_status
+        if provider_reference is not None:
+            payment.provider_reference = provider_reference
+        if provider_message is not None:
+            payment.provider_message = provider_message
+        if provider_payload is not None:
+            payment.provider_payload = _json_ready(provider_payload)
+        if received_amount is not None:
+            payment.received_amount = Decimal(str(received_amount))
+        if last_verified_at is not None:
+            payment.last_verified_at = last_verified_at
         payment.save()
+
+    def _provider_reference_from_result(self, result):
+        if not isinstance(result, dict):
+            return ''
+        return str(
+            result.get('tx_hash')
+            or result.get('reference')
+            or result.get('provider_reference')
+            or result.get('id')
+            or ''
+        )
+
+    def _provider_status_from_result(self, result, *, success=False):
+        if isinstance(result, dict) and result.get('status'):
+            return str(result['status'])
+        if success:
+            return 'completed'
+        return 'failed'
+
+    def _apply_transaction_provider_state(self, transaction, result, *, success):
+        transaction.provider_status = self._provider_status_from_result(result, success=success)
+        transaction.provider_reference = self._provider_reference_from_result(result)
+        transaction.provider_error_code = ''
+        transaction.provider_error_message = ''
+        transaction.provider_payload = _json_ready(result or {})
+        transaction.provider_last_synced_at = timezone.now()
+
+    def _apply_transaction_provider_error(self, transaction, exc, provider_name):
+        transaction.provider_status = 'failed'
+        transaction.provider_reference = ''
+        transaction.provider_error_code = exc.__class__.__name__
+        transaction.provider_error_message = str(exc)
+        transaction.provider_payload = _json_ready({
+            'provider': provider_name,
+            'error': str(exc),
+        })
+        transaction.provider_last_synced_at = timezone.now()
+
+    def _payload_lookup(self, payload, *keys):
+        if not isinstance(payload, dict):
+            return ''
+
+        queue = [payload]
+        while queue:
+            item = queue.pop(0)
+            if isinstance(item, dict):
+                for key in keys:
+                    value = item.get(key)
+                    if value not in (None, ''):
+                        return value
+                for value in item.values():
+                    if isinstance(value, (dict, list)):
+                        queue.append(value)
+            elif isinstance(item, list):
+                for value in item:
+                    if isinstance(value, (dict, list)):
+                        queue.append(value)
+        return ''
+
+    def _provider_for_webhook(self, provider):
+        if provider == 'binance':
+            return get_live_exchange_provider()
+        if provider == 'ecocash':
+            return get_live_payout_provider()
+        raise ValueError(f'Unsupported webhook provider: {provider}')
+
+    def capture_provider_webhook(self, *, provider, headers, payload, raw_body=''):
+        from transactions.models import ProviderWebhookEvent, Transaction
+
+        provider_handler = self._provider_for_webhook(provider)
+        inspection = provider_handler.inspect_webhook(headers=headers, body=raw_body.encode('utf-8'))
+        reference_code = str(
+            self._payload_lookup(
+                payload,
+                'reference_code',
+                'reference',
+                'transaction_ref',
+                'transaction_reference',
+                'merchant_reference',
+                'merchantReference',
+                'client_reference',
+                'clientReference',
+            )
+            or ''
+        ).strip()
+        external_event_id = str(
+            self._payload_lookup(payload, 'event_id', 'eventId', 'id', 'transaction_id', 'transactionId')
+            or ''
+        ).strip()
+        event_type = str(
+            self._payload_lookup(payload, 'event_type', 'eventType', 'type', 'event', 'status')
+            or ''
+        ).strip()
+
+        linked_transaction = None
+        processing_status = 'received'
+        notes = [inspection.get('note', '').strip()]
+        if reference_code:
+            linked_transaction = Transaction.objects.filter(reference_code=reference_code).first()
+            if linked_transaction:
+                processing_status = 'linked'
+                notes.append(f'Linked to transaction {linked_transaction.reference_code}.')
+
+        event = ProviderWebhookEvent.objects.create(
+            provider=provider,
+            event_type=event_type,
+            external_event_id=external_event_id,
+            reference_code=reference_code,
+            transaction=linked_transaction,
+            signature=inspection.get('signature', ''),
+            signature_status=inspection.get('signature_status', 'missing'),
+            processing_status=processing_status,
+            headers=_json_ready(headers or {}),
+            payload=_json_ready(payload or {}),
+            raw_body=raw_body,
+            processing_notes=' '.join(note for note in notes if note),
+        )
+        return event
 
     def _pool_name_for_payment_method(self, payment_method):
         if payment_method == 'bank_transfer':
@@ -375,6 +734,7 @@ class TransactionProcessor:
                 with db_transaction.atomic():
                     transaction.status = 'completed'
                     transaction.completed_at = timezone.now()
+                    self._apply_transaction_provider_state(transaction, result, success=True)
                     self._sync_float_pools(transaction, actor=actor)
                     self._append_admin_note(
                         transaction,
@@ -397,6 +757,11 @@ class TransactionProcessor:
             transaction.status = 'rejected'
             transaction.rejection_reason = str(exc)
             transaction.completed_at = None
+            self._apply_transaction_provider_error(
+                transaction,
+                exc,
+                getattr(self.exchange_provider, 'provider_name', 'exchange'),
+            )
             self._append_admin_note(transaction, f"Processing failed: {exc}")
             transaction.save()
             self._update_payment_status(
@@ -440,6 +805,7 @@ class TransactionProcessor:
                 with db_transaction.atomic():
                     transaction.status = 'completed'
                     transaction.completed_at = timezone.now()
+                    self._apply_transaction_provider_state(transaction, result, success=True)
                     self._sync_float_pools(transaction, actor=actor)
                     self._append_admin_note(
                         transaction,
@@ -454,6 +820,11 @@ class TransactionProcessor:
                         status='confirmed',
                         confirmed=True,
                         confirmed_at=timezone.now(),
+                        provider_status=self._provider_status_from_result(result, success=True),
+                        provider_reference=self._provider_reference_from_result(result),
+                        provider_message=result.get('note', ''),
+                        provider_payload=result,
+                        last_verified_at=timezone.now(),
                     )
                 return {'success': True, 'result': result}
 
@@ -463,6 +834,11 @@ class TransactionProcessor:
             transaction.status = 'rejected'
             transaction.rejection_reason = str(exc)
             transaction.completed_at = None
+            self._apply_transaction_provider_error(
+                transaction,
+                exc,
+                getattr(self.payout_provider, 'provider_name', 'payout'),
+            )
             self._append_admin_note(transaction, f"Processing failed: {exc}")
             transaction.save()
             self._update_payment_status(
@@ -470,6 +846,10 @@ class TransactionProcessor:
                 status='failed',
                 confirmed=False,
                 confirmed_at=None,
+                provider_status='failed',
+                provider_reference='',
+                provider_message=str(exc),
+                provider_payload={'error': str(exc)},
             )
             return {'success': False, 'error': str(exc)}
 
@@ -640,4 +1020,6 @@ class TransactionProcessor:
             'withdrawal_effective_rate': withdrawal_effective_rate,
             'simulated': getattr(self.exchange_provider, 'simulated', settings.SIMULATION_MODE),
             'provider_error': provider_error,
+            'provider_configured': self.exchange_provider.configuration_summary().get('configured', True),
+            'provider_missing_settings': self.exchange_provider.configuration_summary().get('missing_settings', []),
         }

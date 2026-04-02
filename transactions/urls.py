@@ -4,6 +4,8 @@ from . import views
 urlpatterns = [
     path('deposit/', views.deposit_view, name='deposit'),
     path('withdraw/', views.withdrawal_view, name='withdrawal'),
+    path('webhooks/binance/', views.binance_webhook_view, name='binance_webhook'),
+    path('webhooks/ecocash/', views.ecocash_webhook_view, name='ecocash_webhook'),
     path('transactions/', views.transaction_list_view, name='transaction_list'),
     path('transactions/<uuid:pk>/', views.transaction_detail_view, name='transaction_detail'),
     path('transactions/<uuid:pk>/simulate/', views.simulate_payment_view, name='simulate_payment'),

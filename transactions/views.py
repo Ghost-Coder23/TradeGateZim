@@ -1,9 +1,14 @@
+import json
+
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.conf import settings
 from django.db import transaction as db_transaction
+from django.http import HttpResponseBadRequest, JsonResponse
 from django.views.decorators.http import require_POST
+from django.views.decorators.csrf import csrf_exempt
+
 from .models import Transaction
 from .forms import DepositForm, WithdrawalForm
 from .services import TransactionProcessor
@@ -178,3 +183,64 @@ def cancel_transaction_view(request, pk):
 def rates_view(request):
     rates = processor.get_current_rates()
     return render(request, 'transactions/rates.html', {'rates': rates})
+
+
+def _parse_webhook_payload(request):
+    raw_body = request.body.decode('utf-8', errors='replace')
+    if not raw_body.strip():
+        return {}, raw_body
+
+    try:
+        payload = json.loads(raw_body)
+    except json.JSONDecodeError:
+        return None, raw_body
+
+    if isinstance(payload, dict):
+        return payload, raw_body
+    return {'data': payload}, raw_body
+
+
+@csrf_exempt
+@require_POST
+def binance_webhook_view(request):
+    payload, raw_body = _parse_webhook_payload(request)
+    if payload is None:
+        return HttpResponseBadRequest('Invalid JSON payload.')
+
+    event = processor.capture_provider_webhook(
+        provider='binance',
+        headers=dict(request.headers),
+        payload=payload,
+        raw_body=raw_body,
+    )
+    return JsonResponse(
+        {
+            'accepted': True,
+            'event_id': str(event.pk),
+            'processing_status': event.processing_status,
+        },
+        status=202,
+    )
+
+
+@csrf_exempt
+@require_POST
+def ecocash_webhook_view(request):
+    payload, raw_body = _parse_webhook_payload(request)
+    if payload is None:
+        return HttpResponseBadRequest('Invalid JSON payload.')
+
+    event = processor.capture_provider_webhook(
+        provider='ecocash',
+        headers=dict(request.headers),
+        payload=payload,
+        raw_body=raw_body,
+    )
+    return JsonResponse(
+        {
+            'accepted': True,
+            'event_id': str(event.pk),
+            'processing_status': event.processing_status,
+        },
+        status=202,
+    )

@@ -2,15 +2,29 @@ from pathlib import Path
 import os
 
 BASE_DIR = Path(__file__).resolve().parent.parent
-SECRET_KEY = 'django-insecure-simulation-key-change-in-production'
-DEBUG = True
-ALLOWED_HOSTS = ['*']
 
-CSRF_TRUSTED_ORIGINS = [
-    "https://*.serveousercontent.com",
-    "http://localhost:8000",
-    "http://127.0.0.1:8000",
-]
+
+def env_bool(name, default=False):
+    value = os.environ.get(name)
+    if value is None:
+        return default
+    return value.strip().lower() in {'1', 'true', 'yes', 'on'}
+
+
+def env_list(name, default=None):
+    value = os.environ.get(name)
+    if value is None:
+        return list(default or [])
+    return [item.strip() for item in value.split(',') if item.strip()]
+
+
+SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'django-insecure-simulation-key-change-in-production')
+DEBUG = env_bool('DJANGO_DEBUG', True)
+ALLOWED_HOSTS = env_list('DJANGO_ALLOWED_HOSTS', ['*'] if DEBUG else ['localhost', '127.0.0.1'])
+CSRF_TRUSTED_ORIGINS = env_list(
+    'DJANGO_CSRF_TRUSTED_ORIGINS',
+    ['https://*.serveousercontent.com'] if DEBUG else [],
+)
 
 
 INSTALLED_APPS = [
@@ -57,19 +71,42 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'forex_gateway.wsgi.application'
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-    }
-}
 
-CACHES = {
-    'default': {
-        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
-        'LOCATION': 'tradegate-zw-cache',
+POSTGRES_DB = os.environ.get('POSTGRES_DB')
+if POSTGRES_DB:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': POSTGRES_DB,
+            'USER': os.environ.get('POSTGRES_USER', ''),
+            'PASSWORD': os.environ.get('POSTGRES_PASSWORD', ''),
+            'HOST': os.environ.get('POSTGRES_HOST', 'localhost'),
+            'PORT': os.environ.get('POSTGRES_PORT', '5432'),
+        }
     }
-}
+else:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
+    }
+
+REDIS_URL = os.environ.get('REDIS_URL', '').strip()
+if REDIS_URL:
+    CACHES = {
+        'default': {
+            'BACKEND': 'django.core.cache.backends.redis.RedisCache',
+            'LOCATION': REDIS_URL,
+        }
+    }
+else:
+    CACHES = {
+        'default': {
+            'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+            'LOCATION': 'tradegate-zw-cache',
+        }
+    }
 
 AUTH_USER_MODEL = 'users.CustomUser'
 LOGIN_URL = '/login/'
@@ -100,20 +137,31 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # 4. Switch the cache backend to Redis so rate limits work across multiple processes.
 # 5. Move the database from SQLite to PostgreSQL and set DEBUG = False.
 # 6. Only then change SIMULATION_MODE to False.
-SIMULATION_MODE = True 
+SIMULATION_MODE = env_bool('SIMULATION_MODE', True)
 
 # STEP 1 TO GO LIVE: Replace with real Binance API keys
-BINANCE_API_KEY = 'SIMULATED_KEY'
-BINANCE_SECRET_KEY = 'SIMULATED_SECRET'
-BINANCE_TESTNET = True  # Set False for real Binance
+BINANCE_API_KEY = os.environ.get('BINANCE_API_KEY', 'SIMULATED_KEY')
+BINANCE_SECRET_KEY = os.environ.get('BINANCE_SECRET_KEY', 'SIMULATED_SECRET')
+BINANCE_TESTNET = env_bool('BINANCE_TESTNET', True)
+BINANCE_WEBHOOK_SECRET = os.environ.get('BINANCE_WEBHOOK_SECRET', '')
+BINANCE_TRANSFER_ASSET = os.environ.get('BINANCE_TRANSFER_ASSET', 'USDT')
+BINANCE_TRANSFER_NETWORK = os.environ.get('BINANCE_TRANSFER_NETWORK', 'TRX')
+BINANCE_API_TIMEOUT_SECONDS = int(os.environ.get('BINANCE_API_TIMEOUT_SECONDS', '15'))
 
 # STEP 2 TO GO LIVE: Replace with EcoCash Merchant credentials
-ECOCASH_MERCHANT_CODE = 'SIMULATED'
-ECOCASH_MERCHANT_PIN = 'SIMULATED'
-ECOCASH_API_URL = 'https://api.ecocash.co.zw/v1/'  # Real endpoint
+ECOCASH_MERCHANT_CODE = os.environ.get('ECOCASH_MERCHANT_CODE', 'SIMULATED')
+ECOCASH_MERCHANT_PIN = os.environ.get('ECOCASH_MERCHANT_PIN', 'SIMULATED')
+ECOCASH_API_URL = os.environ.get('ECOCASH_API_URL', 'https://api.ecocash.co.zw/v1/')
+ECOCASH_WEBHOOK_SECRET = os.environ.get('ECOCASH_WEBHOOK_SECRET', '')
+ECOCASH_API_TIMEOUT_SECONDS = int(os.environ.get('ECOCASH_API_TIMEOUT_SECONDS', '15'))
 
 # STEP 3 TO GO LIVE: Configure real email
-EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'  # Prints to console
+EMAIL_BACKEND = os.environ.get('EMAIL_BACKEND', 'django.core.mail.backends.console.EmailBackend')
+EMAIL_HOST = os.environ.get('EMAIL_HOST', '')
+EMAIL_PORT = int(os.environ.get('EMAIL_PORT', '587'))
+EMAIL_USE_TLS = env_bool('EMAIL_USE_TLS', True)
+EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', '')
+EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', '')
 # For production: use smtp or sendgrid
 # EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 # EMAIL_HOST = 'smtp.gmail.com'

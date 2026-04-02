@@ -42,6 +42,9 @@ class PaymentDetailsValidationMixin(forms.Form):
     def clean_bank_account(self):
         return self.cleaned_data.get('bank_account', '').strip()
 
+    def clean_destination_account_type(self):
+        return self.cleaned_data.get('destination_account_type') or 'manual'
+
     def clean(self):
         cleaned_data = super().clean()
         payment_method = cleaned_data.get('payment_method')
@@ -71,12 +74,14 @@ class PaymentDetailsValidationMixin(forms.Form):
 class DepositForm(PaymentDetailsValidationMixin, forms.ModelForm):
     class Meta:
         model = Transaction
-        fields = ['platform', 'amount', 'payment_method', 'destination_account']
+        fields = ['platform', 'amount', 'payment_method', 'destination_account_type', 'destination_account']
         widgets = {
+            'destination_account_type': forms.Select(),
             'destination_account': forms.TextInput(attrs={'placeholder': 'Your Binance UID or broker account ID'}),
             'amount': forms.NumberInput(attrs={'min': '10', 'max': '5000', 'step': '0.01'}),
         }
         labels = {
+            'destination_account_type': 'Account Reference Type',
             'destination_account': 'Wallet / Account ID',
             'platform': 'Trading Platform',
             'payment_method': 'Pay Using',
@@ -84,8 +89,10 @@ class DepositForm(PaymentDetailsValidationMixin, forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        for field in self.fields.values():
-            field.widget.attrs['class'] = 'form-control'
+        for name, field in self.fields.items():
+            field.widget.attrs['class'] = 'form-select' if isinstance(field.widget, forms.Select) else 'form-control'
+        self.fields['destination_account_type'].required = False
+        self.fields['destination_account_type'].initial = 'manual'
         self.fields['payer_number'].label = 'Your Mobile Number'
         self.fields['bank_name'].label = 'Your Bank Name'
         self.fields['bank_account'].label = 'Your Bank Account'
@@ -94,8 +101,9 @@ class DepositForm(PaymentDetailsValidationMixin, forms.ModelForm):
 class WithdrawalForm(PaymentDetailsValidationMixin, forms.ModelForm):
     class Meta:
         model = Transaction
-        fields = ['platform', 'amount', 'payment_method', 'destination_account']
+        fields = ['platform', 'amount', 'payment_method', 'destination_account_type', 'destination_account']
         widgets = {
+            'destination_account_type': forms.Select(attrs={'class': 'form-select'}),
             'destination_account': forms.TextInput(attrs={
                 'placeholder': 'Your broker account ID (we pull funds from here)',
                 'class': 'form-control'
@@ -103,6 +111,7 @@ class WithdrawalForm(PaymentDetailsValidationMixin, forms.ModelForm):
             'amount': forms.NumberInput(attrs={'min': '10', 'max': '5000', 'step': '0.01', 'class': 'form-control'}),
         }
         labels = {
+            'destination_account_type': 'Account Reference Type',
             'destination_account': 'Broker / Exchange Account ID',
             'platform': 'Withdraw From',
             'payment_method': 'Receive Via',
@@ -112,6 +121,8 @@ class WithdrawalForm(PaymentDetailsValidationMixin, forms.ModelForm):
         super().__init__(*args, **kwargs)
         self.fields['platform'].widget.attrs['class'] = 'form-control'
         self.fields['payment_method'].widget.attrs['class'] = 'form-control'
+        self.fields['destination_account_type'].required = False
+        self.fields['destination_account_type'].initial = 'broker_account'
         self.fields['payer_number'].label = 'EcoCash / Mobile Number'
         self.fields['bank_name'].label = 'Bank Name'
         self.fields['bank_account'].label = 'Bank Account'

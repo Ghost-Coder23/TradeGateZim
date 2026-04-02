@@ -48,6 +48,12 @@
                 </div>
               </div>
               <div class="mb-3">
+                <label class="form-label" style="color:var(--muted);font-size:0.82rem">ACCOUNT REFERENCE TYPE</label>
+                {{ form.destination_account_type }}
+                {% if form.destination_account_type.errors %}<div class="text-danger small mt-1">{{ form.destination_account_type.errors }}</div>{% endif %}
+                <small style="color:var(--muted)">Choose the format of the account reference we will use for live provider routing</small>
+              </div>
+              <div class="mb-3">
                 <label class="form-label" style="color:var(--muted);font-size:0.82rem">YOUR BROKER ACCOUNT ID</label>
                 {{ form.destination_account }}
                 {% if form.destination_account.errors %}<div class="text-danger small mt-1">{{ form.destination_account.errors }}</div>{% endif %}

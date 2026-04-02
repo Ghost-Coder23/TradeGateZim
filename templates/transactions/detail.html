@@ -81,8 +81,14 @@
             </div>
             <div class="px-4 py-3" style="border-bottom:1px solid var(--border)">
               <div class="stack-mobile-between">
-                <span style="color:var(--muted)">Destination Account</span>
+                <span style="color:var(--muted)">Account Reference</span>
                 <span style="font-family:monospace;font-size:0.85rem;overflow-wrap:anywhere">{{ transaction.destination_account }}</span>
+              </div>
+            </div>
+            <div class="px-4 py-3" style="border-bottom:1px solid var(--border)">
+              <div class="stack-mobile-between">
+                <span style="color:var(--muted)">Account Reference Type</span>
+                <span>{{ transaction.get_destination_account_type_display }}</span>
               </div>
             </div>
             <div class="px-4 py-3" style="border-bottom:1px solid var(--border)">

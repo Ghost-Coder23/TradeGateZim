@@ -5,9 +5,20 @@ from .models import ExchangeRate, FeeSettings, FeeSettingsAuditLog, FloatLedgerE
 
 @admin.register(Payment)
 class PaymentAdmin(admin.ModelAdmin):
-    list_display = ['transaction', 'payer_number', 'amount', 'status', 'confirmed', 'created_at']
-    list_filter = ['status', 'confirmed']
-    search_fields = ['transaction__reference_code', 'payer_number']
+    list_display = [
+        'transaction',
+        'payer_number',
+        'amount',
+        'status',
+        'provider_status',
+        'provider_reference',
+        'confirmed',
+        'last_verified_at',
+        'created_at',
+    ]
+    list_filter = ['status', 'confirmed', 'provider_status']
+    search_fields = ['transaction__reference_code', 'payer_number', 'provider_reference']
+    readonly_fields = ['provider_payload', 'last_verified_at', 'confirmed_at']
 
 
 @admin.register(ExchangeRate)
