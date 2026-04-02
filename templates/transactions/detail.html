@@ -9,10 +9,14 @@
     </nav>
   </div>
   <div class="col-md-10 main-content">
-    <div class="d-flex align-items-center gap-3 mb-4">
-      <a href="{% url 'transaction_list' %}" style="color:var(--muted)"><i class="fas fa-arrow-left"></i></a>
-      <h4 class="fw-bold mb-0">Transaction Details</h4>
-      <span class="badge badge-{{ transaction.status }} ms-auto">{{ transaction.get_status_display }}</span>
+    <div class="page-header">
+      <div class="page-header-main d-flex align-items-center gap-3">
+        <a href="{% url 'transaction_list' %}" style="color:var(--muted)"><i class="fas fa-arrow-left"></i></a>
+        <h4 class="fw-bold mb-0">Transaction Details</h4>
+      </div>
+      <div class="page-actions">
+        <span class="badge badge-{{ transaction.status }}">{{ transaction.get_status_display }}</span>
+      </div>
     </div>
 
     <div class="row g-4">
@@ -24,13 +28,13 @@
             {% empty %}
             {% endfor %}
             <div class="px-4 py-3" style="border-bottom:1px solid var(--border)">
-              <div class="d-flex justify-content-between">
+              <div class="stack-mobile-between">
                 <span style="color:var(--muted)">Reference</span>
                 <span class="ref-code">{{ transaction.reference_code }}</span>
               </div>
             </div>
             <div class="px-4 py-3" style="border-bottom:1px solid var(--border)">
-              <div class="d-flex justify-content-between">
+              <div class="stack-mobile-between">
                 <span style="color:var(--muted)">Type</span>
                 <span class="badge {% if transaction.transaction_type == 'deposit' %}badge-completed{% else %}badge-processing{% endif %}">
                   {{ transaction.transaction_type|capfirst }}
@@ -38,25 +42,25 @@
               </div>
             </div>
             <div class="px-4 py-3" style="border-bottom:1px solid var(--border)">
-              <div class="d-flex justify-content-between">
+              <div class="stack-mobile-between">
                 <span style="color:var(--muted)">Platform</span>
                 <span>{{ transaction.get_platform_display }}</span>
               </div>
             </div>
             <div class="px-4 py-3" style="border-bottom:1px solid var(--border)">
-              <div class="d-flex justify-content-between">
+              <div class="stack-mobile-between">
                 <span style="color:var(--muted)">Amount Submitted</span>
                 <span style="font-family:monospace">${{ transaction.amount }}</span>
               </div>
             </div>
             <div class="px-4 py-3" style="border-bottom:1px solid var(--border)">
-              <div class="d-flex justify-content-between">
+              <div class="stack-mobile-between">
                 <span style="color:var(--muted)">Fee ({{ transaction.fee_percent_applied|default_if_none:"0.00" }}%)</span>
                 <span style="font-family:monospace;color:var(--warning)">-${{ transaction.fee }}</span>
               </div>
             </div>
             <div class="px-4 py-3" style="border-bottom:1px solid var(--border)">
-              <div class="d-flex justify-content-between">
+              <div class="stack-mobile-between">
                 <span style="color:var(--muted)">
                   {% if transaction.transaction_type == 'deposit' %}
                   Trading Account Credit
@@ -70,26 +74,26 @@
               </div>
             </div>
             <div class="px-4 py-3" style="border-bottom:1px solid var(--border)">
-              <div class="d-flex justify-content-between">
+              <div class="stack-mobile-between">
                 <span style="color:var(--muted)">Payment Method</span>
                 <span>{{ transaction.get_payment_method_display }}</span>
               </div>
             </div>
             <div class="px-4 py-3" style="border-bottom:1px solid var(--border)">
-              <div class="d-flex justify-content-between">
+              <div class="stack-mobile-between">
                 <span style="color:var(--muted)">Destination Account</span>
-                <span style="font-family:monospace;font-size:0.85rem">{{ transaction.destination_account }}</span>
+                <span style="font-family:monospace;font-size:0.85rem;overflow-wrap:anywhere">{{ transaction.destination_account }}</span>
               </div>
             </div>
             <div class="px-4 py-3" style="border-bottom:1px solid var(--border)">
-              <div class="d-flex justify-content-between">
+              <div class="stack-mobile-between">
                 <span style="color:var(--muted)">Submitted At</span>
                 <span>{{ transaction.created_at|date:"M d, Y H:i" }}</span>
               </div>
             </div>
             {% if transaction.completed_at %}
             <div class="px-4 py-3">
-              <div class="d-flex justify-content-between">
+              <div class="stack-mobile-between">
                 <span style="color:var(--muted)">Completed At</span>
                 <span style="color:var(--success)">{{ transaction.completed_at|date:"M d, Y H:i" }}</span>
               </div>

@@ -21,11 +21,11 @@
             <form method="post">
               {% csrf_token %}
               <div class="row g-3">
-                <div class="col-6">
+                <div class="col-sm-6">
                   <label class="form-label" style="color:var(--muted);font-size:0.82rem">FIRST NAME</label>
                   <input type="text" name="first_name" class="form-control" value="{{ user.first_name }}">
                 </div>
-                <div class="col-6">
+                <div class="col-sm-6">
                   <label class="form-label" style="color:var(--muted);font-size:0.82rem">LAST NAME</label>
                   <input type="text" name="last_name" class="form-control" value="{{ user.last_name }}">
                 </div>
@@ -57,19 +57,19 @@
         <div class="card">
           <div class="card-header">Account Status</div>
           <div class="card-body p-4">
-            <div class="d-flex justify-content-between py-2" style="border-bottom:1px solid var(--border)">
+            <div class="stack-mobile-between py-2" style="border-bottom:1px solid var(--border)">
               <span style="color:var(--muted)">Username</span>
               <span class="fw-bold">{{ user.username }}</span>
             </div>
-            <div class="d-flex justify-content-between py-2" style="border-bottom:1px solid var(--border)">
+            <div class="stack-mobile-between py-2" style="border-bottom:1px solid var(--border)">
               <span style="color:var(--muted)">Member Since</span>
               <span>{{ user.created_at|date:"M d, Y" }}</span>
             </div>
-            <div class="d-flex justify-content-between py-2" style="border-bottom:1px solid var(--border)">
+            <div class="stack-mobile-between py-2" style="border-bottom:1px solid var(--border)">
               <span style="color:var(--muted)">Email Verified</span>
               <span>{% if user.email_verified %}<span style="color:var(--success)">✓ Verified</span>{% else %}<span style="color:var(--warning)">Pending</span>{% endif %}</span>
             </div>
-            <div class="d-flex justify-content-between py-2">
+            <div class="stack-mobile-between py-2">
               <span style="color:var(--muted)">Account Type</span>
               <span>{% if user.is_staff %}<span style="color:var(--primary)">Admin</span>{% else %}Trader{% endif %}</span>
             </div>

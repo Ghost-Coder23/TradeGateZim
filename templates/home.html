@@ -50,6 +50,7 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
+      gap: 1.5rem;
       padding: 1.2rem 5%;
       background: rgba(8,12,16,0.85);
       backdrop-filter: blur(16px);
@@ -67,6 +68,13 @@
     }
     .logo span { color: var(--text); }
 
+    .nav-menu {
+      display: flex;
+      align-items: center;
+      gap: 1.5rem;
+      margin-left: auto;
+    }
+
     .nav-links { display: flex; align-items: center; gap: 2.5rem; }
     .nav-links a {
       color: var(--muted);
@@ -80,6 +88,21 @@
     .nav-cta {
       display: flex; gap: 0.75rem; align-items: center;
     }
+    .nav-toggle {
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 0.55rem 0.9rem;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: transparent;
+      color: var(--text);
+      font-size: 0.88rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: border-color 0.2s, color 0.2s;
+    }
+    .nav-toggle:hover { border-color: var(--teal); color: var(--teal); }
     .btn-ghost {
       padding: 0.55rem 1.3rem;
       border: 1px solid var(--border);
@@ -518,6 +541,7 @@
     .ticker-wrap {
       background: var(--bg2);
       border-bottom: 1px solid var(--border);
+      margin-top: 78px;
       padding: 10px 0;
       overflow: hidden;
       white-space: nowrap;
@@ -536,14 +560,66 @@
 
     /* ── RESPONSIVE ── */
     @media (max-width: 900px) {
+      nav {
+        padding: 1rem 5%;
+      }
+      .nav-toggle {
+        display: inline-flex;
+        margin-left: auto;
+      }
+      .nav-menu {
+        display: none;
+        width: 100%;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 1rem;
+        padding-top: 1rem;
+        border-top: 1px solid rgba(255,255,255,0.06);
+      }
+      .nav-menu.is-open { display: flex; }
+      .nav-links {
+        width: 100%;
+        flex-direction: column;
+        gap: 0.75rem;
+        align-items: stretch;
+      }
+      .nav-links a {
+        padding: 0.2rem 0;
+      }
+      .nav-cta {
+        width: 100%;
+        flex-direction: column;
+        align-items: stretch;
+      }
+      .btn-ghost,
+      .btn-solid {
+        text-align: center;
+      }
+      .ticker-wrap { margin-top: 72px; }
+      .hero { padding-top: 8.5rem; }
       .hero-inner { grid-template-columns: 1fr; }
       .hero-visual { display: none; }
       .steps-grid { grid-template-columns: 1fr 1fr; }
       .features-grid { grid-template-columns: 1fr; }
       .stats-inner { grid-template-columns: 1fr 1fr; }
-      .nav-links { display: none; }
     }
     @media (max-width: 600px) {
+      nav { gap: 1rem; }
+      .hero { padding-top: 8rem; }
+      .hero-actions,
+      .cta-actions {
+        flex-direction: column;
+      }
+      .btn-hero,
+      .btn-hero-outline {
+        justify-content: center;
+        width: 100%;
+      }
+      .tx-amount-box {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.75rem;
+      }
       .steps-grid { grid-template-columns: 1fr; }
       .stats-inner { grid-template-columns: 1fr 1fr; }
     }
@@ -554,20 +630,23 @@
 <!-- NAV -->
 <nav>
   <a href="{% url 'home' %}" class="logo">Trade<span>Gate</span></a>
-  <div class="nav-links">
-    <a href="#how">How it works</a>
-    <a href="#features">Features</a>
-    <a href="#platforms">Platforms</a>
-    <a href="{% url 'rates' %}">Rates</a>
-  </div>
-  <div class="nav-cta">
-    <a href="{% url 'login' %}" class="btn-ghost">Sign In</a>
-    <a href="{% url 'register' %}" class="btn-solid">Get Started</a>
+  <button type="button" class="nav-toggle" data-nav-toggle aria-expanded="false" aria-controls="homeNavMenu">Menu</button>
+  <div class="nav-menu" id="homeNavMenu" data-nav-menu>
+    <div class="nav-links">
+      <a href="#how">How it works</a>
+      <a href="#features">Features</a>
+      <a href="#platforms">Platforms</a>
+      <a href="{% url 'rates' %}">Rates</a>
+    </div>
+    <div class="nav-cta">
+      <a href="{% url 'login' %}" class="btn-ghost">Sign In</a>
+      <a href="{% url 'register' %}" class="btn-solid">Get Started</a>
+    </div>
   </div>
 </nav>
 
 <!-- TICKER -->
-<div class="ticker-wrap" style="margin-top:64px">
+<div class="ticker-wrap">
   <div class="ticker-inner">
     <div class="ticker-item">USDT/USD <span class="ticker-up">1.0002 ↑</span></div>
     <div class="ticker-item">EcoCash → Binance <span class="ticker-up">Active</span></div>
@@ -798,7 +877,7 @@
 <footer>
   <a href="{% url 'home' %}" class="logo">Trade<span>Gate</span></a>
   <p style="margin-top:0.5rem">Zimbabwe's local forex payment bridge — simulated platform for testing</p>
-  <div style="margin-top:1.5rem;display:flex;gap:1.5rem;justify-content:center;font-size:0.82rem">
+  <div style="margin-top:1.5rem;display:flex;gap:1.5rem;justify-content:center;flex-wrap:wrap;font-size:0.82rem">
     <a href="{% url 'login' %}" style="color:var(--muted);text-decoration:none">Login</a>
     <a href="{% url 'register' %}" style="color:var(--muted);text-decoration:none">Register</a>
     <a href="{% url 'rates' %}" style="color:var(--muted);text-decoration:none">Rates</a>
@@ -808,6 +887,37 @@
 </footer>
 
 <script>
+  const navToggle = document.querySelector('[data-nav-toggle]');
+  const navMenu = document.querySelector('[data-nav-menu]');
+
+  if (navToggle && navMenu) {
+    const closeNavMenu = () => {
+      navMenu.classList.remove('is-open');
+      navToggle.setAttribute('aria-expanded', 'false');
+      navToggle.textContent = 'Menu';
+    };
+
+    navToggle.addEventListener('click', () => {
+      const isOpen = navMenu.classList.toggle('is-open');
+      navToggle.setAttribute('aria-expanded', String(isOpen));
+      navToggle.textContent = isOpen ? 'Close' : 'Menu';
+    });
+
+    navMenu.querySelectorAll('a').forEach((link) => {
+      link.addEventListener('click', () => {
+        if (window.innerWidth <= 900) {
+          closeNavMenu();
+        }
+      });
+    });
+
+    window.addEventListener('resize', () => {
+      if (window.innerWidth > 900) {
+        closeNavMenu();
+      }
+    });
+  }
+
   // Animate sections on scroll
   const observer = new IntersectionObserver((entries) => {
     entries.forEach(e => {

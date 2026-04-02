@@ -28,6 +28,7 @@
             background: var(--bg);
             color: var(--text);
             min-height: 100vh;
+            overflow-x: hidden;
         }
         .navbar {
             background: var(--secondary) !important;
@@ -43,6 +44,14 @@
         .navbar-brand span { color: var(--text); }
         .nav-link { color: var(--muted) !important; font-weight: 500; transition: color 0.2s; }
         .nav-link:hover, .nav-link.active { color: var(--primary) !important; }
+        .navbar-toggler {
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 0.35rem 0.65rem;
+        }
+        .navbar-toggler:focus {
+            box-shadow: 0 0 0 3px rgba(0, 212, 170, 0.15);
+        }
         .sim-banner {
             background: linear-gradient(90deg, #2d1f00, #3d2900);
             border-bottom: 1px solid #d29922;
@@ -110,7 +119,13 @@
         .table { color: var(--text); }
         .table > :not(caption) > * > * { background: transparent; color: var(--text); border-color: var(--border); }
         .table-hover tbody tr:hover > * { background: rgba(255,255,255,0.03); }
-        .ref-code { font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; color: var(--primary); }
+        .table-responsive { -webkit-overflow-scrolling: touch; }
+        .ref-code {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem;
+            color: var(--primary);
+            overflow-wrap: anywhere;
+        }
         .alert-sim {
             background: rgba(210,153,34,0.1);
             border: 1px solid rgba(210,153,34,0.3);
@@ -153,11 +168,66 @@
             color: var(--primary) !important;
         }
         .sidebar .nav-link i { width: 18px; text-align: center; }
-        .main-content { padding: 2rem; }
+        .main-content { padding: 2rem; min-width: 0; }
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 1rem;
+            flex-wrap: wrap;
+            margin-bottom: 1.5rem;
+        }
+        .page-header-main { min-width: 0; }
+        .page-actions {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+        .page-actions .btn { white-space: nowrap; }
+        .stack-mobile-between {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 1rem;
+        }
+        .stack-mobile-between > :last-child { text-align: right; }
+        @media (max-width: 991.98px) {
+            .navbar .container-fluid {
+                padding-left: 1rem !important;
+                padding-right: 1rem !important;
+            }
+            .navbar-collapse {
+                padding-top: 0.75rem;
+            }
+            .navbar-nav {
+                gap: 0.5rem !important;
+                align-items: stretch !important;
+            }
+            .navbar-nav .nav-link,
+            .navbar-nav .btn {
+                width: 100%;
+                text-align: left;
+            }
+            .sim-banner {
+                padding-left: 1rem;
+                padding-right: 1rem;
+            }
+        }
         @media (max-width: 768px) {
             .sidebar { min-height: auto; padding: 1rem; }
-            .main-content { padding: 1rem; }
+            .main-content { padding: 1rem 0; }
             .stat-value { font-size: 1.5rem; }
+            .page-actions {
+                width: 100%;
+            }
+            .page-actions .btn {
+                flex: 1 1 180px;
+            }
+            .stack-mobile-between {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            .stack-mobile-between > :last-child { text-align: left; }
         }
     </style>
     {% block extra_css %}{% endblock %}

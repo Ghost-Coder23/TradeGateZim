@@ -12,11 +12,11 @@
         <form method="post">
           {% csrf_token %}
           <div class="row g-3">
-            <div class="col-6">
+            <div class="col-sm-6">
               <label class="form-label" style="color:var(--muted);font-size:0.82rem">FIRST NAME</label>
               <input type="text" name="first_name" class="form-control" required>
             </div>
-            <div class="col-6">
+            <div class="col-sm-6">
               <label class="form-label" style="color:var(--muted);font-size:0.82rem">LAST NAME</label>
               <input type="text" name="last_name" class="form-control" required>
             </div>
@@ -24,11 +24,11 @@
               <label class="form-label" style="color:var(--muted);font-size:0.82rem">EMAIL ADDRESS</label>
               <input type="email" name="email" class="form-control" required>
             </div>
-            <div class="col-6">
+            <div class="col-sm-6">
               <label class="form-label" style="color:var(--muted);font-size:0.82rem">PHONE (ECOCASH)</label>
               <input type="text" name="phone" class="form-control" placeholder="+263771234567">
             </div>
-            <div class="col-6">
+            <div class="col-sm-6">
               <label class="form-label" style="color:var(--muted);font-size:0.82rem">COUNTRY</label>
               <select name="country" class="form-select">
                 <option value="ZW" selected>Zimbabwe</option>
@@ -42,11 +42,11 @@
               <label class="form-label" style="color:var(--muted);font-size:0.82rem">USERNAME</label>
               <input type="text" name="username" class="form-control" required>
             </div>
-            <div class="col-6">
+            <div class="col-sm-6">
               <label class="form-label" style="color:var(--muted);font-size:0.82rem">PASSWORD</label>
               <input type="password" name="password1" class="form-control" required>
             </div>
-            <div class="col-6">
+            <div class="col-sm-6">
               <label class="form-label" style="color:var(--muted);font-size:0.82rem">CONFIRM PASSWORD</label>
               <input type="password" name="password2" class="form-control" required>
             </div>

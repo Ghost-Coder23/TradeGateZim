@@ -11,9 +11,11 @@
     </nav>
   </div>
   <div class="col-md-10 main-content">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-      <h4 class="fw-bold mb-0"><i class="fas fa-history me-2" style="color:var(--primary)"></i>Transaction History</h4>
-      <div class="d-flex gap-2">
+    <div class="page-header">
+      <div class="page-header-main">
+        <h4 class="fw-bold mb-0"><i class="fas fa-history me-2" style="color:var(--primary)"></i>Transaction History</h4>
+      </div>
+      <div class="page-actions">
         <a href="{% url 'deposit' %}" class="btn btn-primary btn-sm">New Deposit</a>
         <a href="{% url 'withdrawal' %}" class="btn btn-outline-primary btn-sm">New Withdrawal</a>
       </div>

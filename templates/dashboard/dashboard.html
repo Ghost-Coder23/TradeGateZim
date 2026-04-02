@@ -18,12 +18,12 @@
   </div>
 
   <div class="col-md-10 main-content">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-      <div>
+    <div class="page-header">
+      <div class="page-header-main">
         <h4 class="mb-0 fw-bold">Welcome back, {{ user.first_name }} 👋</h4>
         <small style="color:var(--muted)">Your trading gateway overview</small>
       </div>
-      <div class="d-flex gap-2">
+      <div class="page-actions">
         <a href="{% url 'deposit' %}" class="btn btn-primary btn-sm"><i class="fas fa-plus me-1"></i>Deposit</a>
         <a href="{% url 'withdrawal' %}" class="btn btn-outline-primary btn-sm"><i class="fas fa-minus me-1"></i>Withdraw</a>
       </div>
@@ -67,7 +67,7 @@
 
     <!-- Rates -->
     <div class="card mb-4">
-      <div class="card-header d-flex justify-content-between align-items-center">
+      <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
         <span><i class="fas fa-chart-line me-2" style="color:var(--primary)"></i>Current Exchange Rates</span>
         {% if rates.simulated %}<span style="color:var(--warning);font-size:0.75rem;font-family:monospace">⚡ SIMULATED</span>{% endif %}
       </div>
@@ -123,7 +123,7 @@
 
     <!-- Recent Transactions -->
     <div class="card">
-      <div class="card-header d-flex justify-content-between">
+      <div class="card-header d-flex justify-content-between flex-wrap gap-2">
         <span><i class="fas fa-history me-2" style="color:var(--primary)"></i>Recent Transactions</span>
         <a href="{% url 'transaction_list' %}" style="color:var(--primary);font-size:0.85rem">View all →</a>
       </div>
